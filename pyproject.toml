@@ -1,0 +1,7 @@
+[project]
+name = "photo-assistant"
+version = "0.1.0"
+description = "Assistant app for generating image tags and captions. Will also answer some FAQs"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
