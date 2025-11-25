@@ -21,12 +21,13 @@ EMBEDDING_DEPLOYMENT = "text-embedding-3-small"
 def generate_caption_and_tags(vision_summary_json, user_context=""):
 
     system_prompt = (
-        "Jesteś asystentem generującym krótki opis zdjęcia i listę tagów w języku polskim.\n"
+        "Jesteś asystentem generującym krótki opis zdjęcia i listę tagów (5-8 tagów) w języku polskim.\n"
         "Weź pod uwagę wykryte etykiety, opis i tekst (OCR) dostarczony poniżej.\n"
         "Możliwe, że dziennikarz dostarczy krótki opis postaci, miejsc, wydarzeń i kontekstu (opcjonalnie). W takim wypadku należy KONIECZNIE uwzględnić dodatkowy kontekst od użytkownika.\n"
         "Opis zdjęcia powinien być utrzymany w dziennikarskim stylu i nadawać się do publikacji (1-2 zdania). Opis będzie opublikowany razem ze zdjęciem, nie może być suchym opisem widoku. Unikaj opisywania tego, co i tak już widać na zdjęciu.\n"
         "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań typu 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...'.\n"
-        "Nie opisuj gestów i czynności wykonywanych przez ludzi; nie pisz wprost, co te gesty wyrażają. Odwołuj się od razu w sposób ogólny do wyrażanych przez nie abstrakcyjnych pojęć oraz powiązanej problematyki.\n"
+        "Nie pisz wprost, że 'obiekt X symbolizuje pojęcie Y', 'obiekt X przypomina o pojęciu Y', ale odnieś się OD RAZU do pojęcia Y, nie opisując obiektu X.\n"
+        "Nie opisuj wyglądu (włosów, twarzy, ubioru) ludzi. Nie opisuj gestów i czynności wykonywanych przez ludzi; nie pisz wprost, co te gesty wyrażają. Odwołuj się od razu w sposób ogólny do wyrażanych przez nie abstrakcyjnych pojęć oraz powiązanej problematyki.\n"
         "Odwołaj się do kontekstu i ogólnej wiedzy o widocznym zjawisku, możesz przywołać ogólne prawdy i znane fakty związane z tematem, powiązaną problematykę, problemy społeczne, również historyczne fakty z życia widocznych osób, narodów czy grup społecznych.\n"
         "Użyj naturalnego języka polskiego.\n"
         "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: 'caption' (1-2 zdania), \n"
@@ -45,7 +46,7 @@ def generate_caption_and_tags(vision_summary_json, user_context=""):
         user_prompt += """
 WAŻNE: Ten kontekst został dostarczony przez dziennikarza i jest wiarygodny. 
 Wykorzystaj te informacje, aby wzbogacić opis zdjęcia. Jeśli kontekst zawiera 
-nazwiska osób, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i tagach.
+nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i tagach.
 """
 
     response = client.chat.completions.create(

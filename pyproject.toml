@@ -9,6 +9,7 @@ dependencies = [
     "azure-cognitiveservices-vision-computervision>=0.9.1",
     "azure-core>=1.36.0",
     "faiss-cpu>=1.13.0",
+    "image>=1.5.33",
     "msrest>=0.7.1",
     "openai>=2.8.1",
     "python-dotenv>=1.2.1",

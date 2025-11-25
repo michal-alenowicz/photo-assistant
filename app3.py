@@ -1,0 +1,182 @@
+import streamlit as st
+from vision3 import analyze_image
+from llm3 import generate_caption_and_tags
+#from faq_store import FAQStore
+import json
+import io
+from PIL import Image
+
+
+
+st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
+st.title("Asystent opisywania i tagowania zdjęć (Polski)")
+
+#faq = FAQStore("faq.json")
+
+# Create tabs
+tab1, tab2 = st.tabs(["🖼️ Analiza Zdjęć", "❓ FAQ"])
+
+if "prev_filename" not in st.session_state:
+        st.session_state.prev_filename = None
+if "context_input" not in st.session_state:
+        st.session_state.context_input = ""
+
+# ==================== TAB 1: IMAGE ANALYSIS ====================
+
+with tab1:
+    st.header("Prześlij zdjęcie do analizy")
+    
+    # File uploader
+    uploaded_file = st.file_uploader(
+        "Wybierz plik graficzny (JPG, PNG, BMP)",
+        type=["jpg", "jpeg", "png", "bmp"]
+    )
+    
+    if uploaded_file is not None:
+        if uploaded_file.name != st.session_state.prev_filename:
+            # New image detected - wipe context
+            st.session_state.context_input = ""
+            st.session_state.prev_filename = uploaded_file.name
+
+
+    if uploaded_file is not None:
+        # Create two columns
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.subheader("Przesłane zdjęcie")
+            # Display image
+            image = Image.open(uploaded_file)
+            st.image(image, width='stretch')
+            
+            # Image info
+            st.caption(f"Nazwa pliku: {uploaded_file.name}")
+            st.caption(f"Rozmiar: {uploaded_file.size / 1024:.1f} KB")
+            st.caption(f"Wymiary: {image.size[0]} x {image.size[1]} px")
+        
+        with col2:
+            st.subheader("Analiza")
+            
+            # ========== OPTIONAL CONTEXT FIELD (COLLAPSIBLE) ==========
+            with st.expander("⚙️ Dodatkowy kontekst (opcjonalnie)", expanded=False):
+                st.markdown("""
+                Podaj hasłowo dodatkowe informacje, które pomogą w lepszym opisie zdjęcia:
+                - **Osoby**: Nazwiska znanych osób, polityków
+                - **Miejsca**: Nazwy lokalizacji, miast
+                - **Wydarzenia**: Nazwa wydarzenia, okoliczności
+                """)
+                
+                user_context = st.text_area(
+                    "Kontekst:",
+                    value=st.session_state.context_input,
+                    placeholder="Np. 'Donald Trump, Waszyngton, konferencja prasowa'",
+                    height=100,
+                    help="Ten kontekst zostanie przekazany do AI, aby wygenerować bardziej precyzyjny opis",
+                    key="context_input"
+                )
+                
+                # Show character count
+                if user_context:
+                    st.caption(f"Znaki: {len(user_context)}/200")
+                    if len(user_context) > 200:
+                        st.warning("⚠️ Kontekst jest zbyt długi. Zalecamy maksymalnie 200 znaków.")
+            
+
+            # Analyze button
+            if st.button("🔍 Analizuj", type="primary"):
+                with st.spinner("Analizuję zdjęcie..."):
+                    try:
+                        # Convert image to bytes
+                        # img_bytes = uploaded_file.read()
+                        img_byte_arr = io.BytesIO()
+                        image.save(img_byte_arr, format=image.format or 'JPEG')
+                        img_byte_arr.seek(0)
+                        image_data = img_byte_arr.read()
+                        
+
+                        # Get user context (empty string if None or whitespace)
+                        stripped_context = user_context.strip() if 'user_context' in locals() and user_context else ""
+
+                        # Analyze
+                        vision = analyze_image(image_data)
+                        res = generate_caption_and_tags(vision, user_context=stripped_context)
+                        
+                        # Display results
+                        st.success("✅ Analiza zakończona!")
+                        
+                        # Show if context was used
+                        if stripped_context:
+                            st.info(f"ℹ️ Użyto dodatkowego kontekstu: *{stripped_context[:100]}{'...' if len(stripped_context) > 100 else ''}*")
+                        
+
+                        # Caption
+                        st.markdown("### 📝 Opis zdjęcia")
+                        st.write(res.get("caption") or res.get("raw"))
+                        
+                        # Tags
+                        st.markdown("### 🏷️ Tagi")
+                        tags = res.get("tags", [])
+                        if tags:
+                            tags_html = " ".join([
+                                f'<span style="background-color: #e3f2fd; padding: 5px 10px; '
+                                f'margin: 2px; border-radius: 15px; display: inline-block;">{t}</span>'
+                                for t in tags
+                            ])
+                            st.markdown(tags_html, unsafe_allow_html=True)
+                        
+                        # Show results as json
+                        with st.expander("🔍 Skopiuj opis i tagi w json"):
+                            st.json(res)
+
+                        # Show detailed insights in expander
+                        with st.expander("🔍 Pośrednia analiza CV (debug)"):
+                            st.json(vision)
+                    
+                    except Exception as e:
+                        st.error(f"❌ Błąd podczas analizy: {str(e)}")
+
+
+
+# uploaded = st.file_uploader("Prześlij zdjęcie", type=["jpg","jpeg","png"])
+
+# if uploaded:
+#     img_bytes = uploaded.read()
+#     with st.spinner("Analizuję zdjęcie..."):
+#         vision = analyze_image(img_bytes)
+#         st.subheader("Surowe wyniki analizy obrazu")
+#         st.json(vision)
+#         # ask LLM to produce Polish caption & tags
+#         res = generate_caption_and_tags(vision)
+#     st.subheader("Wynik LLM (polski)")
+#     st.write(res.get("caption") or res.get("raw"))
+#     st.write("Tagi:")
+#     tags = res.get("tags", [])
+#     if tags:
+#         for t in tags:
+#             st.write(f"- {t.get('tag')} (confidence: {t.get('confidence')})")
+    
+    
+    
+    
+# # FAQ question box
+# st.subheader("Zapytaj FAQ lub ogólne pytanie")
+# q = st.text_input("Twoje pytanie (PL)")
+# if st.button("Zadaj pytanie"):
+#     if not q.strip():
+#         st.warning("Wpisz pytanie.")
+#     else:
+#         hits = faq.query(q, topk=1)
+#         if hits and hits[0]["score"] >= 0.75:
+#             st.success("Znaleziono podobne pytanie w FAQ:")
+#             st.write(hits[0]["faq"]["a"])
+#             st.caption(f"Similarity: {hits[0]['score']:.2f}")
+#         else:
+#             # fallback to LLM: answer using vision + faq context
+#             prompt = {
+#                 "vision": vision,
+#                 "user_question": q,
+#                 "faq": faq.faqs
+#             }
+#             # call LLM to answer
+#             llm_ans = generate_caption_and_tags(prompt)  # reuse or write a separate answer function
+#             st.write(llm_ans.get("raw") or llm_ans)
