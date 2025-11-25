@@ -8,6 +8,12 @@ from PIL import Image
 
 
 
+ALLOWED_FORMATS = {"JPEG", "JPG", "PNG", "GIF", "BMP", "WEBP", "ICO", "TIFF", "MPO"}
+MAX_FILE_MB = 20
+MIN_DIM = 50
+MAX_DIM = 16000
+
+
 st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
 st.title("Asystent opisywania i tagowania zdjęć (Polski)")
 
@@ -24,12 +30,27 @@ if "context_input" not in st.session_state:
 # ==================== TAB 1: IMAGE ANALYSIS ====================
 
 with tab1:
+
+    #   # Show requirements in an info box
+    # with st.expander("📋 Wymagania dotyczące zdjęć", expanded=False):
+    #     st.markdown("""
+    #     **Obsługiwane formaty:** JPEG, PNG, GIF, BMP, WEBP, ICO, TIFF, MPO
+        
+    #     **Wymagania techniczne:**
+    #     - Maksymalny rozmiar pliku: **20 MB** (zalecane: do 10 MB)
+    #     - Minimalne wymiary: **50 x 50 pikseli** (zalecane min. 150 x 150)
+    #     - Maksymalne wymiary: **16,000 x 16,000 pikseli**
+        
+    #     """)
+
+
+
     st.header("Prześlij zdjęcie do analizy")
     
     # File uploader
     uploaded_file = st.file_uploader(
-        "Wybierz plik graficzny (JPG, PNG, BMP)",
-        type=["jpg", "jpeg", "png", "bmp"]
+        "Wybierz plik graficzny (uwaga, narzędzia do analizy obrazów narzucają limit: 20 MB)",
+        type=["jpg", "jpeg", "png", "gif", "bmp", "webp", "ico", "tiff", "mpo"]
     )
     
     if uploaded_file is not None:
@@ -48,11 +69,50 @@ with tab1:
             # Display image
             image = Image.open(uploaded_file)
             st.image(image, width='stretch')
+
+            # ---- 1) File size check ----
+            file_size_mb = uploaded_file.size / (1024 * 1024)
+
+            if file_size_mb > MAX_FILE_MB:
+                st.error(f"❌ Plik zbyt duży ({file_size_mb:.1f} MB). Dopuszczalne max.: {MAX_FILE_MB} MB.")
+                st.stop()
+
+            # ---- 2) File format check ----
+            try:
+                img = Image.open(uploaded_file)
+                fmt = img.format.upper()
+
+                if fmt not in ALLOWED_FORMATS:
+                    st.error(f"❌ Niedozwolony format: {fmt}")
+                    st.stop()
+
+            except Exception as e:
+                st.error("❌ Błąd odczytu obrazu: " + str(e))
+                st.stop()
+
+            # ---- 3) Resolution check ----
+            width, height = img.size
+
+            if width < MIN_DIM or height < MIN_DIM:
+                st.error(f"❌ Obraz zbyt mały: {width}×{height}px. Minimum to {MIN_DIM}×{MIN_DIM}.")
+                st.stop()
+
+            if width > MAX_DIM or height > MAX_DIM:
+                st.error(f"❌ Obraz zbyt duży: {width}×{height}px. Maksimum to {MAX_DIM}×{MAX_DIM}.")
+                st.stop()
             
-            # Image info
+
+            # SUCKCES - Image info
             st.caption(f"Nazwa pliku: {uploaded_file.name}")
             st.caption(f"Rozmiar: {uploaded_file.size / 1024:.1f} KB")
             st.caption(f"Wymiary: {image.size[0]} x {image.size[1]} px")
+
+            if image.size[0] < 150 or image.size[1] < 150:
+                st.warning(
+                    f"⚠️ Uwaga: Obraz jest bardzo mały!\n\n"
+                    f"Zalecane minimalne wymiary to **150 × 150 px**. "
+                    "Jeśli użyjesz tego obrazu, wyniki analizy mogą być mniej wiarygodne."
+                )
         
         with col2:
             st.subheader("Analiza")
@@ -125,7 +185,7 @@ with tab1:
                             st.markdown(tags_html, unsafe_allow_html=True)
                         
                         # Show results as json
-                        with st.expander("🔍 Skopiuj opis i tagi w json"):
+                        with st.expander("🔍 Opis i tagi w json"):
                             st.json(res)
 
                         # Show detailed insights in expander
@@ -137,23 +197,7 @@ with tab1:
 
 
 
-# uploaded = st.file_uploader("Prześlij zdjęcie", type=["jpg","jpeg","png"])
 
-# if uploaded:
-#     img_bytes = uploaded.read()
-#     with st.spinner("Analizuję zdjęcie..."):
-#         vision = analyze_image(img_bytes)
-#         st.subheader("Surowe wyniki analizy obrazu")
-#         st.json(vision)
-#         # ask LLM to produce Polish caption & tags
-#         res = generate_caption_and_tags(vision)
-#     st.subheader("Wynik LLM (polski)")
-#     st.write(res.get("caption") or res.get("raw"))
-#     st.write("Tagi:")
-#     tags = res.get("tags", [])
-#     if tags:
-#         for t in tags:
-#             st.write(f"- {t.get('tag')} (confidence: {t.get('confidence')})")
     
     
     
