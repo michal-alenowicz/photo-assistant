@@ -599,7 +599,7 @@ requires-dist = [
     { name = "msrest", specifier = ">=0.7.1" },
     { name = "openai", specifier = ">=2.8.1" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "requests" },
+    { name = "requests", specifier = ">=2.32.5" },
     { name = "streamlit", specifier = ">=1.51.0" },
 ]
 
