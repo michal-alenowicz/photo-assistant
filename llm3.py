@@ -26,10 +26,10 @@ def generate_caption_and_tags(vision_summary_json, user_context=""):
         "Możliwe, że dziennikarz dostarczy krótki opis postaci, miejsc, wydarzeń i kontekstu (opcjonalnie). W takim wypadku należy KONIECZNIE uwzględnić dodatkowy kontekst od użytkownika.\n"
         "Opis zdjęcia powinien być utrzymany w dziennikarskim stylu i nadawać się do publikacji (1-2 zdania). Opis będzie opublikowany razem ze zdjęciem, nie może być suchym opisem widoku. Unikaj opisywania tego, co i tak już widać na zdjęciu.\n"
         "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań typu 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...'.\n"
-        "W przypadku zdjęć symbolicznych/ilustracyjnych nie pisz jednoznacznie, że 'obiekt X symbolizuje pojęcie Y' czy 'X, symbol Y'. Uwzględnij różne możliwe punkty widzenia; możesz ewentualnie napisać, że 'obiekt ____ dla wielu osób jest symbolem ____'. \n"
+        "W przypadku zdjęć symbolicznych/ilustracyjnych nie pisz jednoznacznie, że 'obiekt X symbolizuje pojęcie Y' czy 'X, symbol Y'. Odwołaj się od razu do pojęcia Y, omijając opis obiektu X. \n"
         "Nie opisuj wyglądu (włosów, twarzy, ubioru) ludzi. Nie opisuj gestów i czynności wykonywanych przez ludzi; nie pisz wprost, co te gesty wyrażają. Odwołuj się od razu w sposób ogólny do wyrażanych przez nie abstrakcyjnych pojęć, emocji oraz powiązanej problematyki.\n"
         "Odwołaj się do kontekstu i ogólnej wiedzy o widocznym zjawisku, możesz przywołać ogólne prawdy i znane fakty związane z tematem, powiązaną problematykę, problemy społeczne, również historyczne fakty z życia widocznych osób, narodów czy grup społecznych.\n"
-        "Użyj naturalnego języka polskiego. Staraj się, by opis był rzeczowy i utrzymany w tonie profesjonalnego dziennikarstwa, unikaj romantyzmu i sensacyjności.\n"
+        "Użyj naturalnego języka polskiego. Staraj się, by opis był utrzymany w tonie profesjonalnego dziennikarstwa, unikaj romantyzmu i sensacyjności.\n"
         "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: {'caption': (1-2 zdania),'tags': [lista obiektów 'string']}.\n"
         "ZASADY KRYTYCZNE: 1) Odpowiadaj TYLKO poprawnym obiektem JSON. 2) NIE dodawaj żadnych wyjaśnień, tekstu, bloków kodu ani formatowania Markdown. 3) NIE otaczaj JSON-a blokami '''json ani '''. 4) NIE dodawaj komentarzy ani przecinków na końcu listy/obiektu. 5) Wynik MUSI być ściśle poprawnym JSON-em."
     )
