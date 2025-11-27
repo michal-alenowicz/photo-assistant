@@ -197,7 +197,7 @@ class FAQSystem:
         # Return top K
         return similarities[:top_k]
     
-    def answer_question(self, question: str, similarity_threshold: float = 0.5) -> Dict:
+    def answer_question(self, question: str, similarity_threshold: float = 0.3) -> Dict:
         """
         Answer user question using FAQ system + LLM
         """
