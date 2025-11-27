@@ -1,39 +1,87 @@
 # vision.py
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from msrest.authentication import CognitiveServicesCredentials
 import os
+from azure.ai.vision.imageanalysis import ImageAnalysisClient
+from azure.core.credentials import AzureKeyCredential
 
-endpoint = os.getenv("AZURE_VISION_ENDPOINT")
-key = os.getenv("AZURE_VISION_KEY")
-client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(key))
+VISION_ENDPOINT = os.getenv("AZURE_VISION_ENDPOINT")
+VISION_API_KEY = os.getenv("AZURE_VISION_KEY")
 
-def analyze_image_bytes(image_bytes):
-    """Return dict: captions, tags (with confidence), ocr_text (if any)."""
-    from io import BytesIO
-    stream = BytesIO(image_bytes)
-    # describe
-    desc = client.describe_image_in_stream(stream, max_candidates=3)
-    captions = [{"text": c.text, "confidence": c.confidence} for c in (desc.captions or [])]
-    # Reset stream pointer
-    stream.seek(0)
-    # tags
-    tags_res = client.tag_image_in_stream(stream)
-    tags = [{"name": t.name, "confidence": t.confidence} for t in (tags_res.tags or [])]
-    # OCR (read)
-    stream.seek(0)
-    ocr = client.read_in_stream(stream, raw=True)
-    # azure read is async — get result
-    operation_location_remote = ocr.headers["Operation-Location"]
-    operation_id = operation_location_remote.split("/")[-1]
-    import time
-    while True:
-        result = client.get_read_result(operation_id)
-        if result.status not in ['notStarted', 'running']:
-            break
-        time.sleep(0.5)
-    ocr_text = ""
-    if result.status == 'succeeded':
-        for page in result.analyze_result.read_results:
-            for line in page.lines:
-                ocr_text += line.text + "\n"
-    return {"captions": captions, "tags": tags, "ocr_text": ocr_text}
+client = ImageAnalysisClient(
+    endpoint=VISION_ENDPOINT,
+    credential=AzureKeyCredential(VISION_API_KEY)
+)
+
+def analyze_image(image_bytes: bytes) -> dict:
+   
+
+    features = [
+        "Caption",
+        "DenseCaptions",
+        "Read",
+        "Tags"
+    ]
+
+    result = client.analyze(
+        image_data=image_bytes,
+        visual_features=features,
+        gender_neutral_caption=False
+    )
+
+    summary = {}
+
+     # ---------------------------------------------------------
+    # Caption
+    # ---------------------------------------------------------
+    if hasattr(result, "caption") and result.caption:
+        summary["main_caption"] = [{
+                "text": result.caption.text,
+                "confidence": result.caption.confidence,
+            }]
+    
+
+    # ---------------------------------------------------------
+    # Dense Captions
+    # ---------------------------------------------------------
+    if hasattr(result, "dense_captions") and result.dense_captions:
+        summary["dense_captions"] = []
+        for cap in result.dense_captions.list:
+            summary["dense_captions"].append({
+                "text": cap.text,
+                "confidence": cap.confidence,
+                "bbox": {
+                    "x": cap.bounding_box.x,
+                    "y": cap.bounding_box.y,
+                    "w": cap.bounding_box.width,
+                    "h": cap.bounding_box.height,
+                },
+            })
+
+   # -----------------------------------------------------
+    # Tags (may contain landmarks)
+    # -----------------------------------------------------
+    if hasattr(result, "tags") and result.tags:
+        summary["tags"] = [
+            {"tag": tag.name, "confidence": tag.confidence}
+            for tag in result.tags.list
+        ]
+
+        # possible landmark detection
+        summary["landmarks"] = [
+            {"name": tag.name, "confidence": tag.confidence}
+            for tag in result.tags.list
+            if "landmark" in tag.name.lower()
+        ]
+
+    # -----------------------------------------------------
+    # OCR (Read)
+    # -----------------------------------------------------
+    if hasattr(result, "read") and result.read and result.read.blocks:
+        all_text = []
+        for block in result.read.blocks:
+            for line in block.lines:
+                all_text.append(line.text)
+        summary["ocr_text"] = "\n".join(all_text)
+
+ 
+
+    return summary
