@@ -118,6 +118,8 @@ class ImageAnalyzer:
         Build structured prompt for GPT from vision analysis results
         Adds user context when present
         """
+
+
         prompt = (
         "Wygeneruj opis krótki zdjęcia oraz listę tagów (5-8 tagów). Opis zdjęcia powinien być utrzymany w dziennikarskim stylu i nadawać się do publikacji (1-2 zdania). Opis będzie opublikowany razem ze zdjęciem, nie może być suchym opisem widoku.\n" 
         "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań w rodzaju: 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...', 'zdjęcie zwraca uwagę na', 'ujęcie oddaje', 'fotografia przywołuje', 'widok przypomina' i wszystkich równoważnych. Opis będzie opublikowany pod zdjęciem (obrazem), a więc unikaj słów typu 'zdjęcie', 'obraz', 'rysuek', 'scena' .\n"
@@ -157,9 +159,9 @@ class ImageAnalyzer:
             prompt += "INSTRUKCJE dla treści wrażliwych:\n"
             prompt += "- Możesz nazwać rzeczy po imieniu, jeśli to stosowne w kontekście dziennikarskim\n"
             prompt += "- Unikaj przesadnego dystansowania się od tematu\n"
-            prompt += "- W przypadku obrazów o charakterze seksualnym (ocena 5 i wyżej) załóż, że możesz mieć do czynienia z treściami pornograficznymi. Unikaj infantylnej/ckliwej interpretacji.\n"
+            prompt += "- W przypadku obrazów o silnym charakterze seksualnym (ocena na poziomie 6/6) załóż, że masz do czynienia z treściami pornograficznymi / uprzedmiotowieniem człowieka. Napisz to w opisie zdjęcia.\n"
             prompt += "- Kontekst społeczny/kulturowy jest ważniejszy niż naiwny opis\n"
-            prompt += "- Informacja o charakterze tych treści ma ci posłużyć do lepszego zrozumienia kontekstu i odniesienia się do nich - nie generuj żadnych ostrzeżeń ani przestróg dla użytkownika.\n"
+            prompt += "- Informacja o charakterze 'kontrowersyjnych' treści ma ci posłużyć do lepszego zrozumienia kontekstu i odniesienia się do nich - nie generuj żadnych ostrzeżeń ani przestróg dla użytkownika.\n"
             prompt += f"{'='*60}\n\n"
         
         
@@ -176,7 +178,6 @@ Wykorzystaj te informacje, aby wzbogacić opis zdjęcia. Jeśli kontekst zawiera
 nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i tagach.
 
 """
-
         
         return prompt
     
@@ -237,7 +238,7 @@ nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i taga
         "Jesteś asystentem generującym krótki opis zdjęcia i listę tagów (5-8 tagów) w języku polskim.\n"
         "Weź pod uwagę wykryte etykiety, opis i tekst (OCR) dostarczony poniżej.\n"
         "Możliwe, że dziennikarz dostarczy krótki opis postaci, miejsc, wydarzeń i kontekstu (opcjonalnie). W takim wypadku należy KONIECZNIE uwzględnić dodatkowy kontekst od użytkownika.\n"
-        "Jeśli otrzymasz informację o wykryciu wrażliwych treści, możesz wykorzystać ją jako informację o ogólnym charakterze zdjęcia, ale nie odnoś się do tego faktu bezpośrednio w generowanym tekście.\n"
+        "Jeśli otrzymasz informację o wykryciu wrażliwych treści, możesz wykorzystać ją jako informację o ogólnym charakterze zdjęcia.\n"
         "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: {\"caption\": \"(string 1-2 zdania)\",\"tags\": [lista obiektów 'string']}.\n"
         "ZASADY KRYTYCZNE: 1) Odpowiadaj TYLKO poprawnym obiektem JSON. 2) NIE dodawaj żadnych wyjaśnień, tekstu, bloków kodu ani formatowania Markdown. 3) NIE otaczaj JSON-a blokami '''json ani '''. 4) NIE dodawaj komentarzy ani przecinków na końcu listy/obiektu. 5) Wynik MUSI być ściśle poprawnym JSON-em."
     )
@@ -282,7 +283,7 @@ nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i taga
         vision_summary = self.analyze_with_computer_vision(image_bytes)
         
         # Step 2: Generate Polish caption and tags
-        result = self.generate_caption_and_tags(vision_summary, user_context)
+        result = self.generate_caption_and_tags(vision_summary, user_context, safety_context)
         
         # Step 3: Include vision summary for debugging
         result['vision_summary'] = vision_summary

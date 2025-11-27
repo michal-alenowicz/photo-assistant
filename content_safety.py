@@ -63,7 +63,9 @@ class ContentSafetyChecker:
             )
             response.raise_for_status()
             
-            return self._parse_results(response.json())
+            result = self._parse_results(response.json())
+                    
+            return result
         
         except requests.exceptions.RequestException as e:
             # If Content Safety fails, don't block - just return safe result
@@ -86,8 +88,9 @@ class ContentSafetyChecker:
             'is_safe': True,
             'flags': [],
             'details': {},
-            'raw': raw_results  # Keep for debugging
+            'raw': raw_results  # For debugging
         }
+        
         
         # Thresholds for journalism (more permissive than default)
         # News images may contain violence/disturbing content
@@ -118,6 +121,8 @@ class ContentSafetyChecker:
                     'threshold': threshold,
                     'severity_label': self._get_severity_label(severity)
                 })
+                
+        
         
         return results
     

@@ -176,6 +176,7 @@ with tab1:
                         # ===== STEP 1: CONTENT SAFETY CHECK (NEW) =====
                         safety_results = content_safety.analyze_image(image_data)
                         
+                                                
                         # Show alert if content flagged (but don't block)
                         if not safety_results['is_safe']:
                             alert_msg = content_safety.get_alert_message(safety_results)
