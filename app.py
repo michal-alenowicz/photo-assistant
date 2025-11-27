@@ -1,7 +1,7 @@
 import streamlit as st
-from vision import analyze_image
-from llm import generate_caption_and_tags
+from image_analyzer import ImageAnalyzer
 from faq_system import FAQSystem
+from content_safety import ContentSafetyChecker
 import json
 import io
 from PIL import Image
@@ -17,7 +17,17 @@ MAX_DIM = 16000
 st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
 st.title("Asystent opisywania i tagowania zdjęć (Polski)")
 
-
+@st.cache_resource
+def init_image_analyzer():
+    """Initialize Image Analyzer with Azure credentials"""
+    return ImageAnalyzer(
+        azure_vision_endpoint=config.AZURE_VISION_ENDPOINT,
+        azure_vision_key=config.AZURE_VISION_KEY,
+        azure_openai_endpoint=config.AZURE_OPENAI_ENDPOINT,
+        azure_openai_key=config.AZURE_OPENAI_API_KEY,
+        chat_deployment=config.CHAT_DEPLOYMENT,
+        api_version=config.AZURE_OPENAI_API_VERSION
+    )
 
 @st.cache_resource
 def init_faq_system():
@@ -32,8 +42,18 @@ def init_faq_system():
         embedding_api_version=config.AZURE_OPENAI_EMBEDDINGS_API_VERSION
     )
 
+@st.cache_resource
+def init_content_safety():
+    """Initialize Content Safety checker"""
+    return ContentSafetyChecker(
+        endpoint=config.AZURE_CONTENT_SAFETY_ENDPOINT,
+        key=config.AZURE_CONTENT_SAFETY_KEY
+    )
 
+
+analyzer = init_image_analyzer()
 faq_system = init_faq_system()
+content_safety = init_content_safety()
 
 
 # Create tabs
@@ -47,11 +67,8 @@ if "context_input" not in st.session_state:
 # ==================== TAB 1: IMAGE ANALYSIS ====================
 
 with tab1:
-
     st.empty()
     st.header("Prześlij zdjęcie do analizy")
-
-
     
     # File uploader
     uploaded_file = st.file_uploader(
@@ -59,20 +76,16 @@ with tab1:
         type=["jpg", "jpeg", "png", "gif", "bmp", "webp", "ico", "tiff", "mpo"]
     )
     
-    
     # Reset flag when user uploads their own
     if uploaded_file is not None and not isinstance(uploaded_file, io.BufferedReader):
         st.session_state.sample_preloaded = False
-
-
-
+    
     if uploaded_file is not None:
         if uploaded_file.name != st.session_state.prev_filename:
             # New image detected - wipe context
             st.session_state.context_input = ""
             st.session_state.prev_filename = uploaded_file.name
-
-
+    
     if uploaded_file is not None:
         # Create two columns
         col1, col2 = st.columns([1, 1])
@@ -82,44 +95,41 @@ with tab1:
             # Display image
             image = Image.open(uploaded_file)
             st.image(image, width='stretch')
-
-            # ---- 1) File size check ----
+            
+            # ---- File validations ----
             file_size_mb = uploaded_file.size / (1024 * 1024)
-
+            
             if file_size_mb > MAX_FILE_MB:
                 st.error(f"❌ Plik zbyt duży ({file_size_mb:.1f} MB). Dopuszczalne max.: {MAX_FILE_MB} MB.")
                 st.stop()
-
-            # ---- 2) File format check ----
+            
             try:
                 img = Image.open(uploaded_file)
                 fmt = img.format.upper()
-
+                
                 if fmt not in ALLOWED_FORMATS:
                     st.error(f"❌ Niedozwolony format: {fmt}")
                     st.stop()
-
+            
             except Exception as e:
                 st.error("❌ Błąd odczytu obrazu: " + str(e))
                 st.stop()
-
-            # ---- 3) Resolution check ----
+            
             width, height = img.size
-
+            
             if width < MIN_DIM or height < MIN_DIM:
                 st.error(f"❌ Obraz zbyt mały: {width}×{height}px. Minimum to {MIN_DIM}×{MIN_DIM}.")
                 st.stop()
-
+            
             if width > MAX_DIM or height > MAX_DIM:
                 st.error(f"❌ Obraz zbyt duży: {width}×{height}px. Maksimum to {MAX_DIM}×{MAX_DIM}.")
                 st.stop()
             
-
-            # SUCKCES - Image info
+            # SUCCESS - Image info
             st.caption(f"Nazwa pliku: {uploaded_file.name}")
             st.caption(f"Rozmiar: {uploaded_file.size / 1024:.1f} KB")
             st.caption(f"Wymiary: {image.size[0]} x {image.size[1]} px")
-
+            
             if image.size[0] < 150 or image.size[1] < 150:
                 st.warning(
                     f"⚠️ Uwaga: Obraz jest bardzo mały!\n\n"
@@ -130,7 +140,7 @@ with tab1:
         with col2:
             st.subheader("Analiza")
             
-            # ========== OPTIONAL CONTEXT FIELD (COLLAPSIBLE) ==========
+            # Context field
             with st.expander("⚙️ Dodatkowy kontekst (opcjonalnie)", expanded=False):
                 st.markdown("""
                 Podaj hasłowo dodatkowe informacje, które pomogą w lepszym opisie zdjęcia:
@@ -148,47 +158,65 @@ with tab1:
                     key="context_input"
                 )
                 
-                # Show character count
                 if user_context:
                     st.caption(f"Znaki: {len(user_context)}/200")
                     if len(user_context) > 200:
                         st.warning("⚠️ Kontekst jest zbyt długi. Zalecamy maksymalnie 200 znaków.")
             
-
             # Analyze button
             if st.button("🔍 Analizuj", type="primary"):
                 with st.spinner("Analizuję zdjęcie..."):
                     try:
                         # Convert image to bytes
-                        # img_bytes = uploaded_file.read()
                         img_byte_arr = io.BytesIO()
                         image.save(img_byte_arr, format=image.format or 'JPEG')
                         img_byte_arr.seek(0)
                         image_data = img_byte_arr.read()
                         
-
-                        # Get user context (empty string if None or whitespace)
-                        stripped_context = user_context.strip() if 'user_context' in locals() and user_context else ""
-
-                        # Analyze
-                        vision = analyze_image(image_data)
-                        res = generate_caption_and_tags(vision, user_context=stripped_context)
+                        # ===== STEP 1: CONTENT SAFETY CHECK (NEW) =====
+                        safety_results = content_safety.analyze_image(image_data)
                         
-                        # Display results
+                        # Show alert if content flagged (but don't block)
+                        if not safety_results['is_safe']:
+                            alert_msg = content_safety.get_alert_message(safety_results)
+                            st.warning(alert_msg)
+                            
+                            # Show detailed breakdown in expander
+                            with st.expander("🔍 Szczegóły moderacji treści"):
+                                st.markdown(content_safety.get_all_details(safety_results))
+                            
+                            # Tell user they can continue
+                            st.info(
+                                "ℹ️ **Możesz kontynuować pomimo ostrzeżenia.** Materiały dziennikarskie mogą zawierać szokujące treści. "
+                                "System nie blokuje analizy - decyzja należy do Ciebie."
+                            )
+                            
+                            # User can still proceed - just click analyze again
+                            # Or add explicit checkbox:
+                            # if not st.checkbox("Rozumiem, chcę kontynuować"):
+                            #     st.stop()
+                        else:
+                            # All clear
+                            st.success("✅ Weryfikacja treści: Brak ostrzeżeń")
+                        
+
+                        # ===== STEP 2: REGULAR ANALYSIS (continues regardless) =====
+                        stripped_context = user_context.strip() if user_context else ""
+                        
+                        result = analyzer.analyze_image(image_data, user_context=stripped_context, safety_context=safety_results)
+                        
                         st.success("✅ Analiza zakończona!")
                         
-                        # Show if context was used
                         if stripped_context:
-                            st.info(f"ℹ️ Użyto dodatkowego kontekstu: *{stripped_context[:100]}{'...' if len(stripped_context) > 100 else ''}*")
+                            st.info(f"ℹ️ Użyto kontekstu: *{stripped_context[:100]}...*")
                         
-
                         # Caption
                         st.markdown("### 📝 Opis zdjęcia")
-                        st.write(res.get("caption") or res.get("raw"))
+                        st.write(result.get("caption") or result.get("raw"))
                         
                         # Tags
                         st.markdown("### 🏷️ Tagi")
-                        tags = res.get("tags", [])
+                        tags = result.get("tags", [])
                         if tags:
                             tags_html = " ".join([
                                 f'<span style="background-color: #e3f2fd; padding: 5px 10px; '
@@ -197,16 +225,19 @@ with tab1:
                             ])
                             st.markdown(tags_html, unsafe_allow_html=True)
                         
-                        # Show results as json
-                        with st.expander("🔍 Opis i tagi w json"):
-                            st.json(res)
-
-                        # Show detailed insights in expander
+                        # Results JSON
+                        with st.expander("📄 Opis i tagi w JSON"):
+                            st.json({
+                                "caption": result.get("caption"),
+                                "tags": result.get("tags")
+                            })
+                        
+                        # Vision analysis debug
                         with st.expander("🔍 Pośrednia analiza CV (debug)"):
-                            st.json(vision)
+                            st.json(result.get("vision_summary", {}))
                     
                     except Exception as e:
-                        st.error(f"❌ Błąd podczas analizy: {str(e)}")
+                        st.error(f"❌ Błąd: {str(e)}")
 
 
 # ==================== TAB 2: FAQs ====================
