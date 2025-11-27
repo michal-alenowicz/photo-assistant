@@ -1,0 +1,104 @@
+{
+  "faqs": [
+    {
+      "id": 1,
+      "question": "Jak mogę przesłać zdjęcie do analizy?",
+      "answer": "Aby przesłać zdjęcie, kliknij przycisk 'Browse files' lub przeciągnij plik do wyznaczonego obszaru w zakładce 'Analiza Zdjęć'. System obsługuje formaty JPEG i PNG o maksymalnym rozmiarze 20 MB. Po wybraniu pliku zdjęcie zostanie automatycznie wyświetlone, a następnie możesz kliknąć przycisk 'Analizuj zdjęcie' aby rozpocząć proces analizy."
+    },
+    {
+      "id": 2,
+      "question": "Jakie formaty zdjęć są obsługiwane przez system?",
+      "answer": "System obsługuje dwa najpopularniejsze formaty graficzne: JPEG (.jpg, .jpeg) oraz PNG (.png). Zalecamy przesyłanie zdjęć w rozdzielczości co najmniej 800x600 pikseli dla najlepszych rezultatów. Maksymalny rozmiar pojedynczego pliku to 20 MB. Zdjęcia w innych formatach (np. GIF, BMP, TIFF) nie są obecnie obsługiwane."
+    },
+    {
+      "id": 3,
+      "question": "Jak długo trwa analiza pojedynczego zdjęcia?",
+      "answer": "Analiza pojedynczego zdjęcia zajmuje zazwyczaj od 4 do 8 sekund. Czas przetwarzania zależy od kilku czynników: rozmiaru i złożoności obrazu, ilości wykrytych obiektów oraz aktualnego obciążenia systemu. Proces obejmuje analizę wizualną przez Azure Computer Vision oraz generowanie opisu i tagów w języku polskim przez GPT-4."
+    },
+    {
+      "id": 4,
+      "question": "Co to jest pole 'Dodatkowy kontekst' i kiedy powinienem go użyć?",
+      "answer": "Pole 'Dodatkowy kontekst' to opcjonalna funkcja pozwalająca na podanie dodatkowych informacji o zdjęciu, takich jak nazwiska osób, nazwy miejsc, wydarzenia lub inne istotne szczegóły. Jeśli np. na zdjęciu jest polityk, możesz wpisać jego imię i nazwisko - system uwzględni to w opisie. To szczególnie przydatne gdy zdjęcie zawiera osoby znane, specyficzne lokalizacje lub odnosi się do konkretnego wydarzenia. Informacje te znacząco poprawiają precyzję i trafność wygenerowanego opisu."
+    },
+    {
+      "id": 5,
+      "question": "Czy mogę edytować wygenerowane opisy i tagi?",
+      "answer": "W obecnej wersji POC system generuje opisy i tagi, które możesz skopiować do swojego systemu redakcyjnego. Bezpośrednia edycja w interfejsie nie jest jeszcze zaimplementowana, ale jest planowana w przyszłych wersjach. Możesz jednak wielokrotnie analizować to samo zdjęcie z różnym kontekstem dodatkowym, aby uzyskać lepsze rezultaty."
+    },
+    {
+      "id": 6,
+      "question": "Czy system rozpoznaje tekst widoczny na zdjęciach?",
+      "answer": "Tak, system posiada wbudowaną funkcję OCR (Optical Character Recognition), która automatycznie wykrywa i odczytuje tekst widoczny na zdjęciach. Obejmuje to napisy na transparentach, tablicach informacyjnych, billboardach czy dokumentach. Wykryty tekst jest następnie uwzględniany w generowaniu opisu zdjęcia przez AI, co pozwala na bardziej kompletny opis zawartości obrazu."
+    },
+    {
+      "id": 7,
+      "question": "Co się dzieje z przesłanymi przeze mnie zdjęciami?",
+      "answer": "W wersji POC zdjęcia są przetwarzane wyłącznie w czasie rzeczywistym i nie są trwale przechowywane na żadnych serwerach. Obrazy są tymczasowo przekazywane do Azure Computer Vision i Azure OpenAI jedynie w celu analizy, a następnie usuwane. Nie budujemy żadnej bazy danych zdjęć. System został zaprojektowany z myślą o prywatności i bezpieczeństwie danych dziennikarskich."
+    },
+    {
+      "id": 8,
+      "question": "Czy system jest zgodny z RODO i przepisami o ochronie danych?",
+      "answer": "Tak, system wykorzystuje Azure OpenAI z garantowaną lokalizacją danych w regionie UE (Europa Zachodnia). Microsoft gwarantuje, że dane przesyłane przez API nie są wykorzystywane do treningu modeli. Wszystkie komponenty systemu (Azure Computer Vision, Azure OpenAI) są zgodne z RODO i posiadają odpowiednie certyfikaty bezpieczeństwa (ISO 27001, SOC 2). Dla organizacji medialnych to kluczowy aspekt bezpieczeństwa materiałów prasowych."
+    },
+    {
+      "id": 9,
+      "question": "Jak dokładne są generowane opisy zdjęć?",
+      "answer": "System wykorzystuje najnowsze modele AI - Azure Computer Vision 4.0 (model Florence) oraz GPT-5 - osiągając bardzo wysoką dokładność w rozpoznawaniu obiektów, scen i kontekstu. Dokładność identyfikacji obiektów wynosi około 90-95%. Jednak jakość opisu zależy też od jakości zdjęcia i podanego kontekstu. Zalecamy zawsze weryfikację przez dziennikarza, szczególnie w przypadku materiałów prasowych wymagających stuprocentowej pewności faktów."
+    },
+    {
+      "id": 10,
+      "question": "Czy system może rozpoznać osoby znane publicznie i polityków?",
+      "answer": "System w wersji POC nie rozpoznaje osób publicznych ze względu na ograniczony dostęp do tej funkcji w ramach Azure. Jeśli zdjęcie przedstawia postać publiczną lub historyczną, warto wpisać jej nazwisko w polu 'Dodatkowy kontekst'."
+    },
+    {
+      "id": 11,
+      "question": "Co oznaczają ostrzeżenia o treści potencjalnie niewłaściwej?",
+      "answer": "System wykorzystuje Azure AI Content Safety do automatycznego skanowania zdjęć pod kątem treści wrażliwych w czterech kategoriach: mowa nienawiści, przemoc/treści drastyczne, treści seksualne oraz samookaleczenie. Każda kategoria ma poziom od 0 (bezpieczne) do 6 (bardzo drastyczne). Ostrzeżenie nie blokuje analizy - to Ty decydujesz czy kontynuować. Progi są ustawione odpowiednio dla materiałów dziennikarskich, uwzględniając że zdjęcia prasowe mogą dokumentować trudne tematy."
+    },
+    {
+      "id": 12,
+      "question": "Czy mogę analizować zdjęcie pomimo ostrzeżenia o niewłaściwej treści?",
+      "answer": "Tak, absolutnie. System działa w trybie 'alert-only' - ostrzeżenia służą wyłącznie informacji, ale nie blokują możliwości analizy. Rozumiemy, że materiały dziennikarskie często dokumentują trudne wydarzenia (protesty, konflikty, katastrofy). Po otrzymaniu ostrzeżenia możesz normalnie przeanalizować zdjęcie."
+    },
+    {
+      "id": 13,
+      "question": "W jakim języku system generuje opisy i tagi?",
+      "answer": "System generuje wszystkie opisy i tagi wyłącznie w języku polskim. Wykorzystujemy GPT-4, który został wybrany między innymi ze względu na najlepszą jakość przetwarzania języka polskiego spośród dostępnych modeli AI. Opisy są tworzone w profesjonalnym, dziennikarskim stylu, odpowiednim do publikacji w mediach. Wewnętrznie system może używać angielskiego (np. Azure Computer Vision zwraca dane po angielsku), ale wszystko co widzisz w wynikach jest po polsku."
+    },
+    {
+      "id": 14,
+      "question": "Ile kosztuje analiza pojedynczego zdjęcia?",
+      "answer": "W fazie POC koszty ponosi zespół deweloperski. Dla orientacji: analiza jednego zdjęcia kosztuje około 0,003-0,005 USD (ok. 0,01-0,02 PLN), co obejmuje Azure Computer Vision (~0,001 USD), GPT-5 dla opisu (~0,002 USD), sprawdzenie bezpieczeństwa treści (~0,0015 USD) oraz opcjonalnie rozpoznawanie osób. Przy produkcyjnej skali (np. 10,000 zdjęć miesięcznie) koszt wynosi około 30-50 USD/miesiąc."
+    },
+    {
+      "id": 15,
+      "question": "Czy system wykrywa ile osób jest na zdjęciu?",
+      "answer": "Tak, system automatycznie wykrywa i zlicza twarze widoczne na zdjęciu. Azure Computer Vision potrafi zidentyfikować wiele osób jednocześnie i dla każdej twarzy określić przybliżony wiek, płeć oraz dominującą emocję. Te informacje są uwzględniane w końcowym opisie zdjęcia. Funkcja ta jest szczególnie przydatna przy zdjęciach z konferencji prasowych, wieców czy wydarzeń publicznych."
+    },
+    {
+      "id": 16,
+      "question": "Dlaczego czasami opis nie jest idealnie trafny?",
+      "answer": "Dokładność opisu zależy od kilku czynników: jakości i rozdzielczości zdjęcia, złożoności sceny oraz dostępnego kontekstu. AI interpretuje obraz na podstawie tego co 'widzi', ale nie zawsze potrafi zrozumieć pełen kontekst sytuacji. Dlatego pole 'Dodatkowy kontekst' jest tak ważne - im więcej informacji podasz o osobach, miejscach czy wydarzeniach, tym bardziej precyzyjny będzie opis. System nie spekuluje i bazuje tylko na widocznych elementach oraz podanym kontekście."
+    },
+    {
+      "id": 17,
+      "question": "Czy mogę przesłać kilka zdjęć naraz do analizy?",
+      "answer": "Obecna wersja POC obsługuje analizę pojedynczych zdjęć - musisz przesyłać i analizować je jedno po drugim. Funkcja batch processing (przetwarzanie wsadowe) jest planowana w przyszłych wersjach produkcyjnych. Umożliwi ona przesłanie folderu ze zdjęciami i automatyczną analizę wszystkich plików, co znacznie przyspieszy pracę dziennikarzy przy większych materiałach."
+    },
+    {
+      "id": 18,
+      "question": "Jakie technologie stoją za systemem?",
+      "answer": "System wykorzystuje trzy główne komponenty: Azure Computer Vision 4.0 (model Florence) do analizy wizualnej, Azure OpenAI GPT-5 do generowania opisów i tagów w języku polskim oraz Azure AI Content Safety do moderacji treści. Interfejs użytkownika został zbudowany w technologii Streamlit. Wszystkie komponenty są rozwiązaniami enterprise-grade z gwarancją SLA."
+    },
+    {
+      "id": 19,
+      "question": "Czy system będzie dostępny jako API dla naszego CMS?",
+      "answer": "Obecna wersja to POC z interfejsem webowym. Jednak architektura została zaprojektowana z myślą o łatwej integracji API."
+    },
+    {
+      "id": 20,
+      "question": "Kto może zobaczyć moje przesłane zdjęcia?",
+      "answer": "Tylko Ty widzisz swoje zdjęcia podczas analizy. System nie przechowuje historii ani nie udostępnia zdjęć innym użytkownikom. Obrazy są przetwarzane w czasie rzeczywistym przez szyfrowane połączenia do Azure. Nie ma żadnej współdzielonej galerii ani bazy danych. Każda sesja użytkownika jest całkowicie niezależna i prywatna."
+    }
+  ]
+}
