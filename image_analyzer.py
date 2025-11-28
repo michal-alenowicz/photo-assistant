@@ -1,223 +1,220 @@
-from azure.ai.vision.imageanalysis import ImageAnalysisClient
-from azure.core.credentials import AzureKeyCredential
-from openai import AzureOpenAI
+from google.cloud import vision
+from google.oauth2 import service_account
+import openai
 from typing import Dict, Optional
 import json
+import os
 import config
 
 
 class ImageAnalyzer:
     """
-    Image analyzer using Azure Computer Vision + Azure OpenAI
-    Combines vision analysis and caption/tag generation in one class
+    Image analyzer using Google Cloud Vision + OpenAI GPT
     """
     
     def __init__(
         self,
-        azure_vision_endpoint: str,
-        azure_vision_key: str,
-        azure_openai_endpoint: str,
-        azure_openai_key: str,
-        chat_deployment: str,
-        api_version: str = "2025-01-01-preview"
+        google_credentials_path: str,
+        google_project_id: str,
+        openai_api_key: str,
+        openai_model: str = "gpt-4.1"
     ):
         """
-        Initialize analyzer with Azure credentials
+        Initialize analyzer with Google and OpenAI credentials
         
-        Args:
-            azure_vision_endpoint: Azure Computer Vision endpoint
-            azure_vision_key: Azure Computer Vision API key
-            azure_openai_endpoint: Azure OpenAI endpoint
-            azure_openai_key: Azure OpenAI API key
-            chat_deployment: Name of GPT deployment (e.g., "gpt-5-chat")
-            api_version: Azure OpenAI API version
         """
-        # Initialize Computer Vision client
-        self.vision_client = ImageAnalysisClient(
-            endpoint=azure_vision_endpoint,
-            credential=AzureKeyCredential(azure_vision_key)
-        )
+        # Initialize Google Cloud Vision client
+        if os.path.exists(google_credentials_path):
+            credentials = service_account.Credentials.from_service_account_file(
+                google_credentials_path
+            )
+            self.vision_client = vision.ImageAnnotatorClient(credentials=credentials)
+        else:
+            # For Streamlit Cloud - credentials from secrets
+            import streamlit as st
+            if hasattr(st, 'secrets') and 'google_credentials' in st.secrets:
+                creds_dict = dict(st.secrets['google_credentials'])
+                credentials = service_account.Credentials.from_service_account_info(creds_dict)
+                self.vision_client = vision.ImageAnnotatorClient(credentials=credentials)
+            else:
+                # Default credentials (if GOOGLE_APPLICATION_CREDENTIALS env var is set)
+                self.vision_client = vision.ImageAnnotatorClient()
+        
+        self.project_id = google_project_id
         
         # Initialize OpenAI client
-        self.openai_client = AzureOpenAI(
-            api_key=azure_openai_key,
-            azure_endpoint=azure_openai_endpoint,
-            api_version=api_version
-        )
-        
-        self.chat_deployment = chat_deployment
+        self.openai_client = openai.OpenAI(api_key=openai_api_key)
+        self.openai_model = openai_model
+
+        # Detect if using GPT-5 family for parameter compatibility
+        self.is_gpt5 = openai_model.startswith("gpt-5")
     
     def analyze_with_computer_vision(self, image_bytes: bytes) -> Dict:
         """
-        Analyze image using Azure Computer Vision API
-        Returns structured summary with captions, tags, OCR
+        Analyze image using Google Cloud Vision API
+        Returns structured summary
         """
+        image = vision.Image(content=image_bytes)
+        
+        # Request multiple features in one API call
         features = [
-            "Caption",
-            "DenseCaptions",
-            "Read",
-            "Tags"
+            vision.Feature(type_=vision.Feature.Type.LABEL_DETECTION, max_results=20),
+            vision.Feature(type_=vision.Feature.Type.TEXT_DETECTION),
+            vision.Feature(type_=vision.Feature.Type.OBJECT_LOCALIZATION, max_results=10),
+            vision.Feature(type_=vision.Feature.Type.FACE_DETECTION, max_results=10),
+            vision.Feature(type_=vision.Feature.Type.IMAGE_PROPERTIES),
+            vision.Feature(type_=vision.Feature.Type.LANDMARK_DETECTION, max_results=5),
         ]
         
-        result = self.vision_client.analyze(
-            image_data=image_bytes,
-            visual_features=features,
-            gender_neutral_caption=False
-        )
+        request = vision.AnnotateImageRequest(image=image, features=features)
+        response = self.vision_client.annotate_image(request=request)
         
+        # Parse response into structured format
+        summary = self._parse_vision_results(response)
+        
+        return summary
+    
+    def _parse_vision_results(self, response) -> Dict:
+        """
+        Parse Google Vision API response into structured format
+        """
         summary = {}
         
-        # Main Caption
-        if hasattr(result, "caption") and result.caption:
-            summary["main_caption"] = [{
-                "text": result.caption.text,
-                "confidence": result.caption.confidence,
-            }]
+        # Labels
+        if response.label_annotations:
+            summary["tags"] = [
+                {
+                    "tag": label.description,
+                    "confidence": label.score
+                }
+                for label in response.label_annotations
+            ]
         
-        # Dense Captions
-        if hasattr(result, "dense_captions") and result.dense_captions:
-            summary["dense_captions"] = []
-            for cap in result.dense_captions.list:
-                summary["dense_captions"].append({
-                    "text": cap.text,
-                    "confidence": cap.confidence,
-                    "bbox": {
-                        "x": cap.bounding_box.x,
-                        "y": cap.bounding_box.y,
-                        "w": cap.bounding_box.width,
-                        "h": cap.bounding_box.height,
-                    },
+        # Objects with localization
+        if response.localized_object_annotations:
+            summary["objects"] = [
+                {
+                    "name": obj.name,
+                    "confidence": obj.score
+                }
+                for obj in response.localized_object_annotations
+            ]
+        
+        # Face detection (emotions)
+        if response.face_annotations:
+            summary["faces"] = []
+            for face in response.face_annotations:
+                emotions = {
+                    "joy": face.joy_likelihood.name,
+                    "sorrow": face.sorrow_likelihood.name,
+                    "anger": face.anger_likelihood.name,
+                    "surprise": face.surprise_likelihood.name,
+                }
+                summary["faces"].append({
+                    "emotions": emotions,
+                    "confidence": face.detection_confidence
                 })
         
-        # Tags (including possible landmarks)
-        if hasattr(result, "tags") and result.tags:
-            summary["tags"] = [
-                {"tag": tag.name, "confidence": tag.confidence}
-                for tag in result.tags.list
-            ]
-            
-            # Landmark detection
+        # Text detection (OCR)
+        if response.text_annotations:
+            # First annotation contains full text
+            if len(response.text_annotations) > 0:
+                summary["ocr_text"] = response.text_annotations[0].description
+        
+                
+        # Landmarks
+        if response.landmark_annotations:
             summary["landmarks"] = [
-                {"name": tag.name, "confidence": tag.confidence}
-                for tag in result.tags.list
-                if "landmark" in tag.name.lower()
+                {
+                    "name": landmark.description,
+                    "confidence": landmark.score
+                }
+                for landmark in response.landmark_annotations
             ]
         
-        # OCR (Read)
-        if hasattr(result, "read") and result.read and result.read.blocks:
-            all_text = []
-            for block in result.read.blocks:
-                for line in block.lines:
-                    all_text.append(line.text)
-            summary["ocr_text"] = "\n".join(all_text)
+        # Generate main caption from labels (Google doesn't have built-in captions)
+        if summary.get("tags"):
+            top_labels = [tag["tag"] for tag in summary["tags"][:3]]
+            summary["main_caption"] = [{
+                "text": f"Image showing {', '.join(top_labels)}",
+                "confidence": summary["tags"][0]["confidence"]
+            }]
+        
         
         return summary
     
     def _build_prompt(self, vision_summary: Dict, user_context: str = "", safety_context: Dict = None) -> str:
         """
         Build structured prompt for GPT from vision analysis results
-        Adds user context when present
         """
-
-
         prompt = (
-        "Wygeneruj opis krótki zdjęcia oraz listę tagów (5-8 tagów). Opis zdjęcia powinien być utrzymany w dziennikarskim stylu i nadawać się do publikacji (1-2 zdania). Opis będzie opublikowany razem ze zdjęciem, nie może być suchym opisem widoku.\n" 
-        "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań w rodzaju: 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...', 'zdjęcie zwraca uwagę na', 'ujęcie oddaje', 'fotografia przywołuje', 'widok przypomina' i wszystkich równoważnych. Opis będzie opublikowany pod zdjęciem (obrazem), a więc unikaj słów typu 'zdjęcie', 'obraz', 'rysuek', 'scena' .\n"
-        "W przypadku zdjęć symbolicznych/ilustracyjnych nie pisz jednoznacznie, że 'obiekt X symbolizuje pojęcie Y', 'osoba X wykonuje czynność Z, przywołując pojęcie Y' czy 'X to symbol Y'. Odwołaj się od razu do abstrakcyjnego pojęcia Y, omijając opis obiektu X oraz opis treści zdjęcia. \n"
-        "Nie opisuj wyglądu (włosów, twarzy, ubioru) ludzi. Nie opisuj gestów i czynności wykonywanych przez ludzi; nie pisz wprost, co te gesty wyrażają. Odwołuj się od razu w sposób ogólny do wyrażanych przez nie abstrakcyjnych pojęć, emocji oraz powiązanej problematyki.\n"
-        "Odwołaj się do kontekstu i ogólnej wiedzy o widocznym zjawisku, możesz przywołać ogólne prawdy i znane fakty związane z tematem, powiązaną problematykę, problemy społeczne, również historyczne fakty z życia widocznych osób, narodów czy grup społecznych.\n"
-        "Użyj naturalnego języka polskiego. Staraj się, by opis był utrzymany w tonie profesjonalnego dziennikarstwa, unikaj romantyzmu i sensacyjności. Nie używaj sformułowań wyrażających spekulację (typu 'być może', 'zapewne') - opis musi nadawać się do publikacji.\n"
-        "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: {\"caption\": \"(string 1-2 zdania)\",\"tags\": [lista obiektów 'string']}.\n"
-        "ZASADY KRYTYCZNE: 1) Odpowiadaj TYLKO poprawnym obiektem JSON. 2) NIE dodawaj żadnych wyjaśnień, tekstu, bloków kodu ani formatowania Markdown. 3) NIE otaczaj JSON-a blokami '''json ani '''. 4) NIE dodawaj komentarzy ani przecinków na końcu listy/obiektu. 5) Wynik MUSI być ściśle poprawnym JSON-em.\n"
-        "Poniżej analiza zdjęcia (wyniki z Azure Image Analysis):\n\n"
+            "Wygeneruj opis krótki zdjęcia oraz listę tagów (5-8 tagów). Opis zdjęcia powinien być utrzymany w dziennikarskim stylu i nadawać się do publikacji (1-2 zdania). Opis będzie opublikowany razem ze zdjęciem, nie może być suchym opisem widoku.\n" 
+            "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań w rodzaju: 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...', 'zdjęcie zwraca uwagę na', 'ujęcie oddaje', 'fotografia przywołuje', 'widok przypomina' i wszystkich równoważnych. Opis będzie opublikowany pod zdjęciem (obrazem), a więc unikaj słów typu 'zdjęcie', 'obraz', 'rysuek', 'scena'.\n"
+            "W przypadku zdjęć symbolicznych/ilustracyjnych nie pisz jednoznacznie, że 'obiekt X symbolizuje pojęcie Y', 'osoba X wykonuje czynność Z, przywołując pojęcie Y' czy 'X to symbol Y'. Odwołaj się od razu do abstrakcyjnego pojęcia Y, omijając opis obiektu X oraz opis treści zdjęcia.\n"
+            "Nie opisuj wyglądu (włosów, twarzy, ubioru) ludzi. Nie opisuj gestów i czynności wykonywanych przez ludzi; nie pisz wprost, co te gesty wyrażają. Odwołuj się od razu w sposób ogólny do wyrażanych przez nie abstrakcyjnych pojęć, emocji oraz powiązanej problematyki.\n"
+            "Odwołaj się do kontekstu i ogólnej wiedzy o widocznym zjawisku, możesz przywołać ogólne prawdy i znane fakty związane z tematem, powiązaną problematykę, problemy społeczne, również historyczne fakty z życia widocznych osób, narodów czy grup społecznych.\n"
+            "Użyj naturalnego języka polskiego. Staraj się, by opis był utrzymany w tonie profesjonalnego dziennikarstwa, unikaj romantyzmu i sensacyjności. Nie używaj sformułowań wyrażających spekulację (typu 'być może', 'zapewne') - opis musi nadawać się do publikacji.\n"
+            "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: {\"caption\": \"(string 1-2 zdania)\",\"tags\": [lista obiektów 'string']}.\n"
+            "ZASADY KRYTYCZNE: 1) Odpowiadaj TYLKO poprawnym obiektem JSON. 2) NIE dodawaj żadnych wyjaśnień, tekstu, bloków kodu ani formatowania Markdown. 3) NIE otaczaj JSON-a blokami '''json ani '''. 4) NIE dodawaj komentarzy ani przecinków na końcu listy/obiektu. 5) Wynik MUSI być ściśle poprawnym JSON-em.\n"
+            "Poniżej analiza zdjęcia (wyniki z Google Cloud Vision):\n\n"
         )
         
-        cleaned_summary = self._strip_bboxes(vision_summary)
-    
+        #cleaned_summary = vision_summary
+        
         prompt += f"\n\n{'='*60}\n"
-        prompt += f"Vision JSON: {cleaned_summary}."
+        prompt += f"Vision JSON: {vision_summary}."
         
-        
-        #moderation/safety results
+        # Safety context
         if safety_context and not safety_context.get('is_safe'):
             prompt += f"\n\n{'='*60}\n"
             prompt += "INFORMACJA O MODERACJI TREŚCI:\n"
             prompt += "System wykrył potencjalnie wrażliwe treści w tej kategorii:\n"
             
+            # Category names in Polish
+            category_names_pl = {
+                'adult': 'Treści seksualne/dla dorosłych',
+                'violence': 'Przemoc/Treści drastyczne',
+                'racy': 'Treści prowokacyjne',
+                'spoof': 'Zmanipulowane treści (deepfake)',
+                'medical': 'Treści medyczne/chirurgiczne'
+            }
+            
+            # Get numeric scores for all categories (even those below threshold)
+            numeric_scores = safety_context.get('numeric_scores', {})
+            
+            # Show flagged categories first (those that exceeded threshold)
             for flag in safety_context.get('flags', []):
-                category_pl = {
-                    'Sexual': 'treści seksualne',
-                    'Violence': 'przemoc',
-                    'Hate': 'mowa nienawiści',
-                    'SelfHarm': 'samookaleczenie'
-                }.get(flag['category'], flag['category'])
+                cat_name = flag['category']
+                cat_pl = category_names_pl.get(cat_name, cat_name)
+                likelihood = safety_context['details'][cat_name]['likelihood_label']
+                severity = flag.get('severity', flag.get('likelihood_value', 0))
                 
-                severity = flag['severity']
-                prompt += f"- {category_pl.capitalize()} (poziom {severity}/6)\n"
+                prompt += f"⚠️ **{cat_pl}**: {likelihood} (poziom {severity}/5)\n"
             
             prompt += "\n"
             prompt += "INSTRUKCJE dla treści wrażliwych:\n"
             prompt += "- Możesz nazwać rzeczy po imieniu, jeśli to stosowne w kontekście dziennikarskim\n"
             prompt += "- Unikaj przesadnego dystansowania się od tematu\n"
-            prompt += "- W przypadku obrazów o silnym charakterze seksualnym (ocena na poziomie 6/6) załóż, że masz do czynienia z treściami pornograficznymi / uprzedmiotowieniem człowieka. Napisz to w opisie zdjęcia.\n"
+            prompt += "- W przypadku obrazów o silnym charakterze seksualnym (5/5) założ, że masz do czynienia z treściami pornograficznymi / uprzedmiotowieniem człowieka, jeżeli nie jest to ewidentnie dzieło sztuki.\n"
             prompt += "- Kontekst społeczny/kulturowy jest ważniejszy niż naiwny opis\n"
-            prompt += "- Informacja o charakterze 'kontrowersyjnych' treści ma ci posłużyć do lepszego zrozumienia kontekstu i odniesienia się do nich - nie generuj żadnych ostrzeżeń ani przestróg dla użytkownika.\n"
+            prompt += "- Informacja o charakterze 'kontrowersyjnych' treści ma ci posłużyć do lepszego zrozumienia kontekstu - nie generuj żadnych ostrzeżeń ani przestróg dla użytkownika.\n"
             prompt += f"{'='*60}\n\n"
         
-        
-        
-        # User context (if provided)
+        # User context
         if user_context and user_context.strip():
             prompt += f"{'='*60}\n"
             prompt += f"DODATKOWY KONTEKST OD UŻYTKOWNIKA:\n"
             prompt += f"{user_context}\n"
             prompt += f"{'='*60}\n"
             prompt += """
-WAŻNE: Ten kontekst został dostarczony przez dziennikarza i jest wiarygodny. 
-Wykorzystaj te informacje, aby wzbogacić opis zdjęcia. Jeśli kontekst zawiera 
-nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i tagach.
-
+WAŻNE: Wykorzystaj te informacje, aby wzbogacić opis zdjęcia. Jeśli kontekst zawiera 
+nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i tagach. W przypadku konfliktu z treścią odczytaną z OCR, potraktuj priorytetowo OCR.
 """
         
         return prompt
     
 
-    def _strip_bboxes(self, vision_summary: Dict) -> Dict:
-        """
-        Remove bounding box coordinates from vision summary
-        Keeps only text descriptions that are useful
-        """
-        cleaned = {}
-        
-        # Main caption (no bbox)
-        if "main_caption" in vision_summary:
-            cleaned["main_caption"] = [
-                {"text": cap["text"], "confidence": cap["confidence"]}
-                for cap in vision_summary["main_caption"]
-            ]
-        
-        # Dense captions (remove bbox)
-        if "dense_captions" in vision_summary:
-            cleaned["dense_captions"] = [
-                {"text": cap["text"], "confidence": cap["confidence"]}
-                for cap in vision_summary["dense_captions"]
-            ]
-        
-        # Tags (no bbox)
-        if "tags" in vision_summary:
-            cleaned["tags"] = vision_summary["tags"]
-        
-        # Landmarks (no bbox)
-        if "landmarks" in vision_summary:
-            cleaned["landmarks"] = vision_summary["landmarks"]
-        
-        # OCR text (no bbox)
-        if "ocr_text" in vision_summary:
-            cleaned["ocr_text"] = vision_summary["ocr_text"]
-        
-        return cleaned
-
-
+    
     def generate_caption_and_tags(
         self, 
         vision_summary: Dict, 
@@ -225,44 +222,57 @@ nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i taga
         safety_context: Dict = None
     ) -> Dict:
         """
-        Generate Polish caption and tags using Azure OpenAI GPT
+        Generate Polish caption and tags using OpenAI GPT
         
         Args:
             vision_summary: Output from analyze_with_computer_vision()
             user_context: Optional user-provided context
+            safety_context: Optional content safety analysis results
             
         Returns:
-            Dict with 'caption' and 'tags' keys, or 'raw' if JSON parsing fails
+            Dict with 'caption' and 'tags' keys
         """
         system_prompt = (
-        "Jesteś asystentem generującym krótki opis zdjęcia i listę tagów (5-8 tagów) w języku polskim.\n"
-        "Weź pod uwagę wykryte etykiety, opis i tekst (OCR) dostarczony poniżej.\n"
-        "Możliwe, że dziennikarz dostarczy krótki opis postaci, miejsc, wydarzeń i kontekstu (opcjonalnie). W takim wypadku należy KONIECZNIE uwzględnić dodatkowy kontekst od użytkownika.\n"
-        "Jeśli otrzymasz informację o wykryciu wrażliwych treści, możesz wykorzystać ją jako informację o ogólnym charakterze zdjęcia.\n"
-        "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: {\"caption\": \"(string 1-2 zdania)\",\"tags\": [lista obiektów 'string']}.\n"
-        "ZASADY KRYTYCZNE: 1) Odpowiadaj TYLKO poprawnym obiektem JSON. 2) NIE dodawaj żadnych wyjaśnień, tekstu, bloków kodu ani formatowania Markdown. 3) NIE otaczaj JSON-a blokami '''json ani '''. 4) NIE dodawaj komentarzy ani przecinków na końcu listy/obiektu. 5) Wynik MUSI być ściśle poprawnym JSON-em."
-    )
+            "Jesteś asystentem generującym krótki opis zdjęcia i listę tagów (5-8 tagów) w języku polskim.\n"
+            "Weź pod uwagę wykryte etykiety, opis i tekst (OCR) dostarczony poniżej.\n"
+            "Możliwe, że dziennikarz dostarczy krótki opis postaci, miejsc, wydarzeń i kontekstu (opcjonalnie). W takim wypadku należy KONIECZNIE uwzględnić dodatkowy kontekst od użytkownika.\n"
+            "Jeśli otrzymasz informację o wykryciu wrażliwych treści, możesz wykorzystać ją jako informację o ogólnym charakterze zdjęcia.\n"
+            "Zwróć odpowiedź TYLKO w formacie JSON: z kluczami: {\"caption\": \"(string 1-2 zdania)\",\"tags\": [lista obiektów 'string']}.\n"
+            "ZASADY KRYTYCZNE: 1) Odpowiadaj TYLKO poprawnym obiektem JSON. 2) NIE dodawaj żadnych wyjaśnień, tekstu, bloków kodu ani formatowania Markdown. 3) NIE otaczaj JSON-a blokami '''json ani '''. 4) NIE dodawaj komentarzy ani przecinków na końcu listy/obiektu. 5) Wynik MUSI być ściśle poprawnym JSON-em."
+        )
         
         user_prompt = self._build_prompt(vision_summary, user_context, safety_context)
         
         try:
-            response = self.openai_client.chat.completions.create(
-                model=self.chat_deployment,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                max_tokens=350,
-                temperature=0.2,
-            )
+            # GPT-5 compatible parameters
+            if self.is_gpt5:
+                # GPT-5 uses max_completion_tokens and reasoning parameters
+                response = self.openai_client.chat.completions.create(
+                    model=self.openai_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    reasoning_effort="none",
+                    verbosity='low'
+                )
+            else:
+                # GPT-4 and earlier use max_tokens and temperature
+                response = self.openai_client.chat.completions.create(
+                    model=self.openai_model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    max_tokens=350,
+                    temperature=0.2,
+                )
             
             text = response.choices[0].message.content
             
-            # Parse JSON response
             try:
                 return json.loads(text)
             except json.JSONDecodeError:
-                # If JSON parsing fails, return raw text
                 return {"raw": text}
         
         except Exception as e:
@@ -275,14 +285,15 @@ nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i taga
         Args:
             image_bytes: Image binary data
             user_context: Optional user-provided context
+            safety_context: Optional content safety analysis results
             
         Returns:
             Dict with 'caption', 'tags', and 'vision_summary' keys
         """
-        # Step 1: Analyze with Computer Vision
+        # Step 1: Analyze with Google Cloud Vision
         vision_summary = self.analyze_with_computer_vision(image_bytes)
         
-        # Step 2: Generate Polish caption and tags
+        # Step 2: Generate Polish caption and tags with OpenAI
         result = self.generate_caption_and_tags(vision_summary, user_context, safety_context)
         
         # Step 3: Include vision summary for debugging

@@ -1,7 +1,8 @@
 import streamlit as st
 from image_analyzer import ImageAnalyzer
 from faq_system import FAQSystem
-from content_safety import ContentSafetyChecker
+from content_safety_google import ContentSafetyChecker
+from web_entity_detector import WebEntityDetector
 import json
 import io
 from PIL import Image
@@ -29,41 +30,44 @@ with col2:
 
 @st.cache_resource
 def init_image_analyzer():
-    """Initialize Image Analyzer with Azure credentials"""
+    """Initialize Image Analyzer with Google + OpenAI credentials"""
     return ImageAnalyzer(
-        azure_vision_endpoint=config.AZURE_VISION_ENDPOINT,
-        azure_vision_key=config.AZURE_VISION_KEY,
-        azure_openai_endpoint=config.AZURE_OPENAI_ENDPOINT,
-        azure_openai_key=config.AZURE_OPENAI_API_KEY,
-        chat_deployment=config.CHAT_DEPLOYMENT,
-        api_version=config.AZURE_OPENAI_API_VERSION
+        google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS,
+        google_project_id=config.GOOGLE_PROJECT_ID,
+        openai_api_key=config.OPENAI_API_KEY,
+        openai_model=config.OPENAI_MODEL
     )
+
 
 @st.cache_resource
 def init_faq_system():
-    """Initialize FAQ System with Azure OpenAI"""
+    """Initialize FAQ System with OpenAI"""
     return FAQSystem(
-        azure_openai_key=config.AZURE_OPENAI_API_KEY,
-        azure_openai_endpoint=config.AZURE_OPENAI_ENDPOINT,
-        chat_deployment=config.CHAT_DEPLOYMENT,
-        embedding_deployment=config.EMBEDDING_DEPLOYMENT,
-        faq_file_path="faq_data.json",
-        api_version=config.AZURE_OPENAI_API_VERSION,
-        embedding_api_version=config.AZURE_OPENAI_EMBEDDINGS_API_VERSION
+        openai_api_key=config.OPENAI_API_KEY,
+        chat_model=config.OPENAI_MODEL,
+        embedding_model=config.OPENAI_EMBEDDING_MODEL,
+        faq_file_path="faq_data.json"
     )
+
 
 @st.cache_resource
 def init_content_safety():
-    """Initialize Content Safety checker"""
+    """Initialize Content Safety with Google SafeSearch"""
     return ContentSafetyChecker(
-        endpoint=config.AZURE_CONTENT_SAFETY_ENDPOINT,
-        key=config.AZURE_CONTENT_SAFETY_KEY
+        google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS
     )
 
+@st.cache_resource
+def init_web_detector():
+    """Initialize Web Entity Detector""" 
+    return WebEntityDetector(
+        google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS
+    )
 
 analyzer = init_image_analyzer()
 faq_system = init_faq_system()
 content_safety = init_content_safety()
+web_detector = init_web_detector()
 
 
 # Create tabs
@@ -150,28 +154,73 @@ with tab1:
         with col2:
             st.subheader("Analiza")
             
-            # Context field
-            with st.expander("⚙️ Dodatkowy kontekst (opcjonalnie)", expanded=False):
-                st.markdown("""
-                Podaj hasłowo dodatkowe informacje, które pomogą w lepszym opisie zdjęcia:
-                - **Osoby**: Nazwiska znanych osób, polityków
-                - **Miejsca**: Nazwy lokalizacji, miast
-                - **Wydarzenia**: Nazwa wydarzenia, okoliczności
-                """)
-                
-                user_context = st.text_area(
-                    "Kontekst:",
-                    value=st.session_state.context_input,
-                    placeholder="Np. 'Donald Trump, Waszyngton, konferencja prasowa'",
-                    height=100,
-                    help="Ten kontekst zostanie przekazany do AI, aby wygenerować bardziej precyzyjny opis",
-                    key="context_input"
-                )
-                
-                if user_context:
-                    st.caption(f"Znaki: {len(user_context)}/200")
-                    if len(user_context) > 200:
-                        st.warning("⚠️ Kontekst jest zbyt długi. Zalecamy maksymalnie 200 znaków.")
+            # ========== SIMPLIFIED CONTEXT SECTION (COMBINED) ==========
+            st.markdown("### ⚙️ Kontekst zdjęcia")
+            
+            st.markdown("""
+            **Automatyczne wykrywanie:** Google rozpozna osoby, miejsca i wydarzenia  
+            **Lub edytuj ręcznie:** Dodaj nazwiska, lokalizacje, okoliczności
+            """)
+            
+            # Detect context button at the top
+            if st.button("🌐 Wykryj kontekst automatycznie", use_container_width=True, type="secondary"):
+                with st.spinner("Wyszukiwanie w sieci..."):
+                    try:
+                        # Convert image to bytes
+                        img_byte_arr = io.BytesIO()
+                        image.save(img_byte_arr, format=image.format or 'JPEG')
+                        img_byte_arr.seek(0)
+                        image_data = img_byte_arr.read()
+                        
+                        # Detect web entities
+                        web_result = web_detector.detect_web_context(image_data)
+                        
+                        if web_result.get('error'):
+                            st.error(f"❌ Błąd wykrywania: {web_result['error']}")
+                        else:
+                            # Auto-populate context field
+                            if web_result['suggested_context']:
+                                st.session_state.context_input = web_result['suggested_context']
+                                st.rerun()  # Refresh to show populated field
+                                st.success(f"✅ Wykryto: {web_result['suggested_context']}")
+                                
+                                # Show what was found (brief summary)
+                                if web_result['best_guess_label']:
+                                    st.info(f"🎯 {web_result['best_guess_label']}")
+                                
+                                if web_result['web_entities']:
+                                    entities_preview = ", ".join([
+                                        f"{e['description']} ({int(e['score']*100)}%)" 
+                                        for e in web_result['web_entities'][:3]
+                                    ])
+                                    st.caption(f"📋 Wykryte: {entities_preview}")
+                                
+                                
+                            else:
+                                st.warning("⚠️ Nie udało się automatycznie wykryć kontekstu. Wpisz ręcznie poniżej.")
+                    
+                    except Exception as e:
+                        st.error(f"❌ Błąd: {str(e)}")
+            
+            # Context text area (always visible, editable)
+            user_context = st.text_area(
+                "Kontekst (edytowalny):",
+                value=st.session_state.context_input,
+                height=100,
+                help="Automatycznie wykryty kontekst lub wpisany ręcznie. Możesz edytować.",
+                key="context_input"
+            )
+            
+            if user_context:
+                char_count = len(user_context)
+                if char_count > 200:
+                    st.warning(f"⚠️ Kontekst zbyt długi ({char_count}/200 znaków). Skróć dla lepszych wyników.")
+                else:
+                    st.caption(f"✓ {char_count}/200 znaków")
+            
+            st.markdown("---")  # Visual separator
+            
+            # ========== ANALYZE BUTTON ==========
             
             # Analyze button
             if st.button("🔍 Analizuj", type="primary"):

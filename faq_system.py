@@ -1,5 +1,6 @@
-# (AZURE OPENAI VERSION)
-from openai import AzureOpenAI
+#OpenAI version (instead of Azure OpenAI)
+
+import openai
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 import json
@@ -8,42 +9,33 @@ import hashlib
 import os
 from datetime import datetime
 
+
 class FAQSystem:
     def __init__(
         self, 
-        azure_openai_key: str,
-        azure_openai_endpoint: str,
-        chat_deployment: str,
-        embedding_deployment: str,
-        faq_file_path: str,
-        api_version: str = "2025-01-01-preview",
-        embedding_api_version: str = "2023-05-15"
+        openai_api_key: str,
+        chat_model: str,
+        embedding_model: str,
+        faq_file_path: str
     ):
         """
-        Initialize FAQ System with Azure OpenAI
-
+        Initialize FAQ System with OpenAI (standard API)
+        
         """
-        # Initialize Azure OpenAI client for chat
-        self.chat_client = AzureOpenAI(
-            api_key=azure_openai_key,
-            azure_endpoint=azure_openai_endpoint,
-            api_version=api_version
-        )
+        # Initialize OpenAI client
+        self.client = openai.OpenAI(api_key=openai_api_key)
         
-        # Initialize Azure OpenAI client for embeddings
-        self.embedding_client = AzureOpenAI(
-            api_key=azure_openai_key,
-            azure_endpoint=azure_openai_endpoint,
-            api_version=embedding_api_version
-        )
-        
-        self.chat_deployment = chat_deployment
-        self.embedding_deployment = embedding_deployment
+        self.chat_model = chat_model
+        self.embedding_model = embedding_model
         self.faq_file_path = faq_file_path
         self.faq_data = []
         self.embeddings = []
         self.embeddings_cache_file = "faq_embeddings_cache.pkl"
         
+        # Detect if using GPT-5 family
+        self.is_gpt5 = chat_model.startswith("gpt-5.1")
+
+
         # Load FAQ data
         self.load_faq(faq_file_path)
         
@@ -79,9 +71,7 @@ class FAQSystem:
             return hashlib.md5(f.read()).hexdigest()
     
     def _load_cached_embeddings(self, current_hash: str) -> bool:
-        """
-        Load embeddings from cache if valid
-        """
+        """Load embeddings from cache if valid"""
         if not os.path.exists(self.embeddings_cache_file):
             return False
         
@@ -92,12 +82,12 @@ class FAQSystem:
             # Validate cache
             if (cache['file_hash'] == current_hash and 
                 cache['faq_count'] == len(self.faq_data) and
-                cache['model'] == self.embedding_deployment):
+                cache['model'] == self.embedding_model):
                 
                 self.embeddings = cache['embeddings']
                 return True
             else:
-                print("⚠️ Cache invalid (FAQ file changed or different model), regenerating...")
+                print("⚠️ Cache invalid, regenerating...")
                 return False
         
         except Exception as e:
@@ -110,24 +100,22 @@ class FAQSystem:
             'embeddings': self.embeddings,
             'file_hash': file_hash,
             'faq_count': len(self.faq_data),
-            'model': self.embedding_deployment,
+            'model': self.embedding_model,
             'timestamp': datetime.now().isoformat()
         }
         
         try:
             with open(self.embeddings_cache_file, 'wb') as f:
                 pickle.dump(cache, f)
-            print(f"💾 Saved embeddings cache to {self.embeddings_cache_file}")
+            print(f"💾 Saved embeddings cache")
         except Exception as e:
             print(f"⚠️ Failed to save cache: {e}")
     
     def get_embedding(self, text: str) -> List[float]:
-        """
-        Generate embedding for a single text using Azure OpenAI
-        """
+        """Generate embedding using OpenAI"""
         try:
-            response = self.embedding_client.embeddings.create(
-                model=self.embedding_deployment,
+            response = self.client.embeddings.create(
+                model=self.embedding_model,
                 input=text
             )
             return response.data[0].embedding
@@ -136,10 +124,8 @@ class FAQSystem:
             return []
     
     def generate_all_embeddings(self):
-        """
-        Generate embeddings for all FAQ questions
-        """
-        print("🔄 Generating embeddings for FAQ database...")
+        """Generate embeddings for all FAQ questions"""
+        print("🔄 Generating embeddings...")
         
         for i, faq in enumerate(self.faq_data, 1):
             question_text = faq['question']        
@@ -147,16 +133,15 @@ class FAQSystem:
             
             if embedding:
                 self.embeddings.append(embedding)
-                print(f"  ✓ Generated embedding {i}/{len(self.faq_data)}")
+                print(f"  ✓ Generated {i}/{len(self.faq_data)}")
             else:
                 self.embeddings.append([])
-                print(f"  ✗ Failed to generate embedding {i}/{len(self.faq_data)}")
+                print(f"  ✗ Failed {i}/{len(self.faq_data)}")
         
         print(f"✅ Generated {len(self.embeddings)} embeddings")
     
-
     def cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
-        """Calculate cosine similarity between two vectors"""
+        """Calculate cosine similarity"""
         if not vec1 or not vec2:
             return 0.0
         
@@ -173,50 +158,34 @@ class FAQSystem:
         return dot_product / (norm1 * norm2)
     
     def find_similar_faqs(self, question: str, top_k: int = 3) -> List[Tuple[Dict, float]]:
-        """
-        Find most similar FAQs to user question
-        Returns list of (faq_dict, similarity_score) tuples
-        """
-        # Generate embedding for user question
+        """Find most similar FAQs"""
         question_embedding = self.get_embedding(question)
         
         if not question_embedding:
-            print("❌ Failed to generate embedding for user question")
             return []
         
-        # Calculate similarities
         similarities = []
         for i, faq_embedding in enumerate(self.embeddings):
-            if faq_embedding:  # Skip empty embeddings
+            if faq_embedding:
                 similarity = self.cosine_similarity(question_embedding, faq_embedding)
                 similarities.append((self.faq_data[i], similarity))
         
-        # Sort by similarity (highest first)
         similarities.sort(key=lambda x: x[1], reverse=True)
-        
-        # Return top K
         return similarities[:top_k]
     
     def answer_question(self, question: str, similarity_threshold: float = 0.3) -> Dict:
-        """
-        Answer user question using FAQ system + LLM
-        """
-        # Find similar FAQs
+        """Answer user question using FAQ + OpenAI"""
         similar_faqs = self.find_similar_faqs(question, top_k=3)
         
-        # Check if we have good matches
         if not similar_faqs or similar_faqs[0][1] < similarity_threshold:
             return {
-                "answer": "Przepraszam, nie znalazłem odpowiedzi na to pytanie w bazie FAQ. Czy możesz je sformułować inaczej lub zadać bardziej szczegółowe pytanie?",
+                "answer": "Przepraszam, nie znalazłem odpowiedzi na to pytanie w bazie FAQ.",
                 "matched_faqs": [],
                 "confidence": "low",
                 "top_similarity": 0.0
             }
         
-        # Build context from matched FAQs
         context = self._build_context(similar_faqs)
-        
-        # Generate answer using Azure OpenAI GPT-4
         answer = self._generate_answer_with_llm(question, context)
         
         return {
@@ -234,8 +203,8 @@ class FAQSystem:
         }
     
     def _build_context(self, similar_faqs: List[Tuple[Dict, float]]) -> str:
-        """Build context string from matched FAQs"""
-        context = "Powiązane pytania i odpowiedzi z bazy FAQ:\n\n"
+        """Build context from matched FAQs"""
+        context = "Powiązane pytania z FAQ:\n\n"
         
         for i, (faq, score) in enumerate(similar_faqs, 1):
             context += f"{i}. PYTANIE: {faq['question']}\n"
@@ -245,72 +214,56 @@ class FAQSystem:
         return context
     
     def _generate_answer_with_llm(self, question: str, context: str) -> str:
-        """Use Azure OpenAI GPT-4 to generate natural answer based on FAQ context"""
-        
+        """Generate answer using OpenAI"""
         prompt = f"""{context}
 
 PYTANIE UŻYTKOWNIKA:
 {question}
 
-ZADANIE:
-Na podstawie powyższych informacji z FAQ, odpowiedz na pytanie użytkownika w naturalny, 
-przyjazny sposób. Jeśli pytanie jest bezpośrednio związane z którymś z FAQ, użyj tej 
-informacji. Jeśli nie ma dokładnego dopasowania, ale możesz pomóc na podstawie 
-dostępnego kontekstu, zrób to. Odpowiedź powinna być zwięzła (2-4 zdania) i pomocna.
-
-Jeśli żadna z informacji nie jest związana z pytaniem, powiedz o tym szczerze.
+Odpowiedz na pytanie w naturalny sposób (2-4 zdania) na podstawie informacji z FAQ.
 """
         
         try:
-            response = self.chat_client.chat.completions.create(
-                model=self.chat_deployment,  # Your deployment name (e.g., "gpt-4", "gpt-4-turbo")
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """Jesteś pomocnym asystentem FAQ dla systemu analizy 
-                        zdjęć prasowych. Odpowiadasz na pytania użytkowników w sposób przyjazny, 
-                        profesjonalny i zwięzły. Używasz informacji z bazy FAQ, ale 
-                        formułujesz odpowiedzi w naturalny sposób."""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.7,
-                max_tokens=300
-            )
+            # GPT-5 compatible parameters
+            if self.is_gpt5:
+                response = self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Jesteś pomocnym asystentem FAQ. Odpowiadasz zwięźle i profesjonalnie."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    reasoning_effort="none",
+                    verbosity='low' 
+                )
+            else:
+                # GPT-4 and earlier
+                response = self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Jesteś pomocnym asystentem FAQ. Odpowiadasz zwięźle i profesjonalnie."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=0.7,
+                    max_tokens=300
+                )
             
             return response.choices[0].message.content.strip()
         
         except Exception as e:
-            return f"Przepraszam, wystąpił błąd podczas generowania odpowiedzi: {str(e)}"
-    
-    def get_all_faqs(self) -> List[Dict]:
-        """Get all FAQ entries"""
-        return self.faq_data
-    
-    def get_faq_by_id(self, faq_id: int) -> Optional[Dict]:
-        """Get specific FAQ by ID"""
-        for faq in self.faq_data:
-            if faq.get('id') == faq_id:
-                return faq
-        return None
+            return f"Przepraszam, wystąpił błąd: {str(e)}"
     
     def get_faq_count(self) -> int:
-        """Get total number of FAQs"""
+        """Get total FAQ count"""
         return len(self.faq_data)
-    
-    # def search_faqs_by_keyword(self, keyword: str) -> List[Dict]:
-    #     """
-    #     Simple keyword search in questions and answers
-    #     """
-    #     keyword_lower = keyword.lower()
-    #     results = []
-        
-    #     for faq in self.faq_data:
-    #         if (keyword_lower in faq['question'].lower() or 
-    #             keyword_lower in faq['answer'].lower()):
-    #             results.append(faq)
-        
-    #     return results
