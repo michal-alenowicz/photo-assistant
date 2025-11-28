@@ -15,7 +15,17 @@ MAX_DIM = 16000
 
 
 st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
-st.title("Asystent opisywania i tagowania zdjęć (Polski)")
+
+col1, col2 = st.columns([6, 1])
+with col1:
+    st.title("Donal POC - Asystent opisywania i tagowania zdjęć")
+
+with col2:
+    st.write("")
+    banner = Image.open("donal.png")
+    st.image(banner, width='stretch')
+    st.caption('(przeciągnij mnie na pole upload)')
+
 
 @st.cache_resource
 def init_image_analyzer():

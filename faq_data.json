@@ -489,6 +489,11 @@
     "id": 98,
     "question": "Jak zgłosić błąd lub problem z systemem?",
     "answer": "W wersji POC błędy można zgłaszać bezpośrednio zespołowi deweloperskiemu. W przyszłości planowany jest system ticketingu lub formularza zgłaszania problemów bezpośrednio z interfejsu aplikacji."
+    },
+    {
+    "id": 99,
+    "question": "Czy to może być podpisane Donal Tusk?",
+    "answer": "Podpisy pod zdjęcia rozbudowane tutaj dajemy kontekst, zachowanie, emocje, to nie może być podpisane Donal Tusk"
     }
   ]
 }
