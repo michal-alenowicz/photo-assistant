@@ -2,498 +2,263 @@
   "faqs": [
     {
       "id": 1,
-      "question": "Jak mogę przesłać zdjęcie do analizy?",
-      "answer": "Aby przesłać zdjęcie, kliknij przycisk 'Browse files' lub przeciągnij plik do wyznaczonego obszaru w zakładce 'Analiza Zdjęć'. System obsługuje wiele formatów graficznych o maksymalnym rozmiarze 20 MB. Po wybraniu pliku zdjęcie zostanie automatycznie wyświetlone, a następnie możesz kliknąć przycisk 'Analizuj' aby rozpocząć proces analizy."
+      "question": "Jak przesłać zdjęcie do analizy?",
+      "answer": "Kliknij 'Browse files' lub przeciągnij plik graficzny bezpośrednio na pole uploadera. Obsługiwane formaty to JPG, PNG, GIF, BMP, WEBP, ICO, TIFF i MPO. Maksymalny rozmiar pliku to 20 MB."
     },
     {
       "id": 2,
-      "question": "Jakie formaty zdjęć są obsługiwane przez system?",
-      "answer": "System obsługuje wszystkie popularne formaty graficzne: JPEG (.jpg, .jpeg), PNG (.png), GIF (.gif), BMP (.bmp), WEBP (.webp), TIFF (.tiff), ICO (.ico) oraz MPO (.mpo). Zalecamy przesyłanie zdjęć w rozdzielczości co najmniej 150×150 pikseli dla najlepszych rezultatów. Maksymalny rozmiar pojedynczego pliku to 20 MB."
+      "question": "Jakie formaty zdjęć są obsługiwane?",
+      "answer": "System akceptuje następujące formaty: JPEG, JPG, PNG, GIF, BMP, WEBP, ICO, TIFF oraz MPO. Zalecane są pliki w formacie JPEG lub PNG dla najlepszych wyników."
     },
     {
       "id": 3,
-      "question": "Jak długo trwa analiza pojedynczego zdjęcia?",
-      "answer": "Analiza pojedynczego zdjęcia zajmuje zazwyczaj od 5 do 10 sekund. Czas przetwarzania zależy od kilku czynników: rozmiaru i złożoności obrazu, ilości wykrytych obiektów oraz aktualnego obciążenia systemu. Proces obejmuje analizę wizualną przez Azure Computer Vision 4.0, sprawdzenie bezpieczeństwa treści przez Azure Content Safety oraz generowanie opisu i tagów w języku polskim przez GPT-5."
+      "question": "Jaki jest maksymalny rozmiar pliku?",
+      "answer": "Maksymalny rozmiar pojedynczego pliku to 20 MB. Jest to ograniczenie techniczne narzucone przez Google Cloud Vision API oraz Streamlit Cloud. Jeśli Twój plik jest większy, spróbuj go skompresować przed przesłaniem."
     },
     {
       "id": 4,
-      "question": "Co to jest pole 'Dodatkowy kontekst' i kiedy powinienem go użyć?",
-      "answer": "Pole 'Dodatkowy kontekst' to opcjonalna funkcja pozwalająca na podanie dodatkowych informacji o zdjęciu, takich jak nazwiska osób, nazwy miejsc, wydarzenia lub inne istotne szczegóły. Jeśli np. na zdjęciu jest polityk, możesz wpisać jego imię i nazwisko - system uwzględni to w opisie. To szczególnie przydatne gdy zdjęcie zawiera osoby znane, specyficzne lokalizacje lub odnosi się do konkretnego wydarzenia. Informacje te znacząco poprawiają precyzję i trafność wygenerowanego opisu."
+      "question": "Jakie są minimalne i maksymalne wymiary zdjęcia?",
+      "answer": "Minimalne wymiary to 50×50 pikseli, maksymalne to 16000×16000 pikseli. Dla najlepszych wyników zalecamy zdjęcia o wymiarach co najmniej 150×150 pikseli. Bardzo małe obrazy mogą dawać mniej dokładne opisy."
     },
     {
       "id": 5,
-      "question": "Czy mogę edytować wygenerowane opisy i tagi?",
-      "answer": "W obecnej wersji POC system generuje opisy i tagi, które możesz skopiować do swojego systemu redakcyjnego. Bezpośrednia edycja w interfejsie nie jest jeszcze zaimplementowana, ale jest planowana w przyszłych wersjach. Możesz jednak wielokrotnie analizować to samo zdjęcie z różnym kontekstem dodatkowym, aby uzyskać lepsze rezultaty."
+      "question": "Co dzieje się po przesłaniu zdjęcia?",
+      "answer": "Po przesłaniu system sprawdza format i rozmiar pliku, wyświetla podgląd obrazu oraz podstawowe informacje (nazwa, rozmiar, wymiary). Możesz wtedy użyć automatycznego wykrywania kontekstu lub wpisać kontekst ręcznie, a następnie kliknąć 'Analizuj zdjęcie'."
     },
     {
       "id": 6,
-      "question": "Czy system rozpoznaje tekst widoczny na zdjęciach?",
-      "answer": "Tak, system posiada wbudowaną funkcję OCR (Optical Character Recognition), która automatycznie wykrywa i odczytuje tekst widoczny na zdjęciach. Obejmuje to napisy na transparentach, tablicach informacyjnych, billboardach czy dokumentach. Wykryty tekst jest następnie uwzględniany w generowaniu opisu zdjęcia przez AI, co pozwala na bardziej kompletny opis zawartości obrazu. OCR działa dla tekstu w wielu językach, w tym polskiego i angielskiego."
+      "question": "Co to jest automatyczne wykrywanie kontekstu?",
+      "answer": "Funkcja 'Wykryj kontekst automatycznie' wykorzystuje Google Cloud Vision Web Detection API do wyszukiwania podobnych obrazów w internecie. Na podstawie znalezionych wyników system rozpoznaje osoby, miejsca i wydarzenia widoczne na zdjęciu, a następnie automatycznie wypełnia pole kontekstu."
     },
     {
       "id": 7,
-      "question": "Co się dzieje z przesłanymi przeze mnie zdjęciami?",
-      "answer": "W wersji POC zdjęcia są przetwarzane wyłącznie w czasie rzeczywistym i nie są trwale przechowywane na żadnych serwerach. Obrazy są tymczasowo przekazywane do Azure Computer Vision i Azure OpenAI jedynie w celu analizy, a następnie usuwane. Nie budujemy żadnej bazy danych zdjęć. System został zaprojektowany z myślą o prywatności i bezpieczeństwie danych dziennikarskich."
+      "question": "Jak działa wykrywanie kontekstu przez Google?",
+      "answer": "Google porównuje przesłane zdjęcie z milionami obrazów w internecie, identyfikując najlepsze dopasowanie ('best guess label') oraz wykrywając konkretne elementy ('web entities') takie jak nazwiska osób, nazwy miejsc czy wydarzeń. System wybiera najbardziej pewne rozpoznania i proponuje je jako kontekst."
     },
     {
       "id": 8,
-      "question": "Czy system jest zgodny z RODO i przepisami o ochronie danych?",
-      "answer": "Tak, system wykorzystuje Azure OpenAI z gwarantowaną lokalizacją danych w regionie UE (Europa Zachodnia). Microsoft gwarantuje, że dane przesyłane przez API nie są wykorzystywane do treningu modeli. Wszystkie komponenty systemu (Azure Computer Vision, Azure OpenAI, Azure Content Safety) są zgodne z RODO i posiadają odpowiednie certyfikaty bezpieczeństwa (ISO 27001, SOC 2). Dla organizacji medialnych to kluczowy aspekt bezpieczeństwa materiałów prasowych."
+      "question": "Czy muszę używać automatycznego wykrywania kontekstu?",
+      "answer": "Nie, jest to opcjonalne. Możesz wpisać kontekst ręcznie, użyć automatycznego wykrywania, lub połączyć oba podejścia - najpierw wykryć automatycznie, a potem edytować sugestie. Kontekst znacząco poprawia jakość opisów, szczególnie dla zdjęć znanych osób czy miejsc."
     },
     {
       "id": 9,
-      "question": "Jak dokładne są generowane opisy zdjęć?",
-      "answer": "System wykorzystuje najnowsze modele AI - Azure Computer Vision 4.0 (model Florence) oraz GPT-5 - osiągając bardzo wysoką dokładność w rozpoznawaniu obiektów, scen i kontekstu. Dokładność identyfikacji obiektów wynosi około 90-95%. Jednak jakość opisu zależy też od jakości zdjęcia i podanego kontekstu. Zalecamy zawsze weryfikację przez dziennikarza, szczególnie w przypadku materiałów prasowych wymagających stuprocentowej pewności faktów."
+      "question": "Co to jest 'best guess label' w wykrywaniu kontekstu?",
+      "answer": "Best guess label to najbardziej prawdopodobny opis całego zdjęcia według Google, np. 'Eiffel Tower at night' lub 'Donald Trump press conference'. Jest to wynik porównania z milionami podobnych obrazów w internecie. System używa tej etykiety jako podstawy automatycznie sugerowanego kontekstu."
     },
     {
       "id": 10,
-      "question": "Czy system może rozpoznać osoby znane publicznie i polityków?",
-      "answer": "System w wersji POC nie posiada aktywnej funkcji automatycznego rozpoznawania osób publicznych. Jeśli zdjęcie przedstawia postać publiczną lub historyczną, warto wpisać jej nazwisko w polu 'Dodatkowy kontekst'. System wtedy uwzględni tę informację w opisie i tagach, zapewniając dokładniejszą identyfikację osoby na zdjęciu."
+      "question": "Co to są 'web entities'?",
+      "answer": "Web entities to konkretne elementy wykryte na zdjęciu: osoby (np. 'Angela Merkel'), miejsca (np. 'Brandenburger Tor'), obiekty (np. 'BMW'), wydarzenia. Google przypisuje im ocenę pewności (0-100%). System wybiera tylko te z oceną powyżej 50% i sortuje według pewności."
     },
     {
       "id": 11,
-      "question": "Co oznaczają ostrzeżenia o treści potencjalnie niewłaściwej?",
-      "answer": "System wykorzystuje Azure AI Content Safety do automatycznego skanowania zdjęć pod kątem treści wrażliwych w czterech kategoriach: mowa nienawiści, przemoc/treści drastyczne, treści seksualne oraz samookaleczenie. Każda kategoria ma poziom od 0 (bezpieczne) do 6 (bardzo drastyczne). Ostrzeżenie nie blokuje analizy - to Ty decydujesz co robić ze zdjęciem. Progi są ustawione odpowiednio dla materiałów dziennikarskich, uwzględniając że zdjęcia prasowe mogą dokumentować trudne tematy."
+      "question": "Dlaczego wykrywanie kontekstu czasem nie działa?",
+      "answer": "Wykrywanie kontekstu wymaga, aby podobne zdjęcie istniało w internecie. Działa świetnie dla: zdjęć znanych osób/miejsc, materiałów prasowych, publicznie dostępnych wydarzeń. Nie zadziała dla: prywatnych zdjęć, unikalnych obrazów, treści które nie są indeksowane przez Google."
     },
     {
       "id": 12,
-      "question": "Czy mogę analizować zdjęcie pomimo ostrzeżenia o niewłaściwej treści?",
-      "answer": "Tak, absolutnie. System działa w trybie 'alert-only' - ostrzeżenia służą wyłącznie informacji, ale nie blokują możliwości analizy. Rozumiemy, że materiały dziennikarskie często dokumentują trudne wydarzenia (protesty, konflikty, katastrofy). Po otrzymaniu ostrzeżenia możesz normalnie przeanalizować zdjęcie. System automatycznie dostosuje ton opisu do charakteru treści, używając dojrzałego, dziennikarskiego języka."
+      "question": "Dlaczego powinienem podać kontekst do zdjęcia?",
+      "answer": "Kontekst dramatycznie poprawia jakość opisu. Google Vision rozpoznaje 'mężczyzna w garniturze', ale z kontekstem 'Donald Trump, Waszyngton' GPT-4.1 wygeneruje precyzyjny opis prasowy z nazwiskiem i lokalizacją. Bez kontekstu opisy są ogólne i mniej użyteczne dla dziennikarstwa."
     },
     {
       "id": 13,
-      "question": "W jakim języku system generuje opisy i tagi?",
-      "answer": "System generuje wszystkie opisy i tagi wyłącznie w języku polskim. Wykorzystujemy GPT-5, który został wybrany między innymi ze względu na najlepszą jakość przetwarzania języka polskiego spośród dostępnych modeli AI. Opisy są tworzone w profesjonalnym, dziennikarskim stylu, odpowiednim do publikacji w mediach. Wewnętrznie system może używać angielskiego (np. Azure Computer Vision zwraca dane po angielsku), ale wszystko co widzisz w wynikach jest po polsku."
+      "question": "Czy mogę edytować automatycznie wykryty kontekst?",
+      "answer": "Tak, pole kontekstu jest w pełni edytowalne. Możesz dodać informacje których Google nie wykrył (np. datę, nazwę wydarzenia), poprawić błędne rozpoznania, lub całkowicie zastąpić sugestie własnym tekstem. Zalecamy używać wykrywania jako punktu startowego."
     },
     {
       "id": 14,
-      "question": "Ile kosztuje analiza pojedynczego zdjęcia?",
-      "answer": "W fazie POC koszty ponosi zespół deweloperski. Dla orientacji: analiza jednego zdjęcia kosztuje około 0,003-0,005 USD (ok. 0,01-0,02 PLN), co obejmuje Azure Computer Vision (~0,001 USD), GPT-5 dla opisu (~0,002 USD) oraz sprawdzenie bezpieczeństwa treści (~0,0015 USD). Przy produkcyjnej skali (np. 10,000 zdjęć miesięcznie) koszt wynosi około 30-50 USD/miesiąc."
+      "question": "Ile znaków może mieć kontekst?",
+      "answer": "Zalecamy maksymalnie 200 znaków. Dłuższy kontekst może być skrócony przez system lub wpłynąć negatywnie na jakość opisu. Najlepsze wyniki dają zwięzłe, konkretne informacje: nazwiska, miejsca, daty, nazwa wydarzenia."
     },
     {
       "id": 15,
-      "question": "Czy jest możliwość przełączenia języka?",
-      "answer": "Nie, system obecnie pracuje jedynie z opisami w języku polskim. Dodatkowe języki mogą zostać dodane w przyszłości."
+      "question": "Co się dzieje po kliknięciu 'Analizuj zdjęcie'?",
+      "answer": "System wykonuje trzy kroki: (1) Weryfikacja treści przez Google SafeSearch - sprawdzenie czy obraz nie zawiera treści wrażliwych, (2) Analiza wizualna przez Google Cloud Vision - wykrycie obiektów, tekstu, twarzy itp., (3) Generowanie opisu i tagów przez GPT-4.1 na podstawie wyników analizy i podanego kontekstu."
     },
     {
       "id": 16,
-      "question": "Dlaczego czasami opis nie jest idealnie trafny?",
-      "answer": "Dokładność opisu zależy od kilku czynników: jakości i rozdzielczości zdjęcia, złożoności sceny oraz dostępnego kontekstu. AI interpretuje obraz na podstawie tego co 'widzi', ale nie zawsze potrafi zrozumieć pełen kontekst sytuacji. Dlatego pole 'Dodatkowy kontekst' jest tak ważne - im więcej informacji podasz o osobach, miejscach czy wydarzeniach, tym bardziej precyzyjny będzie opis. System nie spekuluje i bazuje tylko na widocznych elementach oraz podanym kontekście."
+      "question": "Jakiej technologii używa system do analizy obrazów?",
+      "answer": "System wykorzystuje Google Cloud Vision API do analizy wizualnej (wykrywanie obiektów, tekstu OCR, analiza twarzy, web entities) oraz OpenAI GPT-4.1 do generowania opisów w stylu dziennikarskim i tagów na podstawie wyników analizy."
     },
     {
       "id": 17,
-      "question": "Czy mogę przesłać kilka zdjęć naraz do analizy?",
-      "answer": "Obecna wersja POC obsługuje analizę pojedynczych zdjęć - musisz przesyłać i analizować je jedno po drugim. Funkcja batch processing (przetwarzanie wsadowe) jest planowana w przyszłych wersjach produkcyjnych. Umożliwi ona przesłanie folderu ze zdjęciami i automatyczną analizę wszystkich plików, co znacznie przyspieszy pracę dziennikarzy przy większych materiałach."
+      "question": "Co wykrywa Google Cloud Vision w zdjęciu?",
+      "answer": "Google Vision analizuje: etykiety (labels) - wykryte obiekty i sceny, obiekty z lokalizacją (objects) - gdzie na obrazie są konkretne rzeczy, twarze z emocjami (faces), tekst (OCR), kolory dominujące, landmarki geograficzne, oraz web entities. Te dane są przekazywane do GPT-4.1 do syntezy opisu."
     },
     {
       "id": 18,
-      "question": "Jakie technologie stoją za systemem?",
-      "answer": "System wykorzystuje cztery główne komponenty: Azure Computer Vision 4.0 (model Florence) do analizy wizualnej, Azure OpenAI GPT-5 do generowania opisów i tagów w języku polskim, Azure AI Content Safety do moderacji treści oraz embeddingi text-embedding-3-small do systemu FAQ. Interfejs użytkownika został zbudowany w technologii Streamlit. Komponenty Azure są rozwiązaniami enterprise-grade z gwarancją SLA 99,9%."
+      "question": "Czy system rozpoznaje tekst na zdjęciach?",
+      "answer": "Tak, Google Vision OCR wykrywa i odczytuje tekst w wielu językach, w tym polski, angielski, niemiecki itd. Rozpoznany tekst jest uwzględniany w analizie i może być wykorzystany w opisie lub tagach, np. nazwy ulic, napisy na transparentach, tytuły książek."
     },
     {
       "id": 19,
-      "question": "Czy system będzie dostępny jako API dla naszego CMS?",
-      "answer": "Obecna wersja to POC z interfejsem webowym. Jednak architektura została zaprojektowana z myślą o łatwej integracji API. W wersji produkcyjnej możliwe będzie udostępnienie REST API pozwalającego na bezpośrednią integrację z systemami CMS, DAM czy redakcyjnymi. API będzie zwracać strukturalne dane JSON z opisami i tagami."
+      "question": "Czy system wykrywa emocje na twarzach?",
+      "answer": "Tak, Google Vision Face Detection analizuje twarze i wykrywa prawdopodobieństwo emocji: radość (joy), smutek (sorrow), złość (anger), zaskoczenie (surprise). Jednak zgodnie z wytycznymi dla dziennikarstwa, system nie opisuje wyglądu ani gestów ludzi - skupia się na kontekście sytuacji."
     },
     {
       "id": 20,
-      "question": "Kto może zobaczyć moje przesłane zdjęcia?",
-      "answer": "Tylko Ty widzisz swoje zdjęcia podczas analizy. System nie przechowuje historii ani nie udostępnia zdjęć innym użytkownikom. Obrazy są przetwarzane w czasie rzeczywistym przez szyfrowane połączenia do Azure. Nie ma żadnej współdzielonej galerii ani bazy danych. Każda sesja użytkownika jest całkowicie niezależna i prywatna."
+      "question": "Co to jest moderacja treści i jak działa?",
+      "answer": "Moderacja treści wykorzystuje Google SafeSearch do wykrywania potencjalnie wrażliwych kategorii: treści dla dorosłych (adult), treści medyczne/chirurgiczne (medical) oraz przemoc (violence). Każda kategoria otrzymuje ocenę 0-5, gdzie 0 to brak zagrożenia, a 5 to bardzo wysokie prawdopodobieństwo. System ostrzega o treściach wrażliwych, ale nie blokuje analizy - decyzja należy do użytkownika."
     },
     {
       "id": 21,
-      "question": "Jakie są minimalne i maksymalne wymiary zdjęć?",
-      "answer": "System akceptuje zdjęcia o minimalnych wymiarach 50×50 pikseli i maksymalnych 16000×16000 pikseli. Jednak zalecamy przesyłanie zdjęć o wymiarach co najmniej 150×150 pikseli dla optymalnej jakości analizy. Zbyt małe obrazy (poniżej 150×150 px) otrzymają ostrzeżenie o możliwej niższej wiarygodności wyników."
+      "question": "Dlaczego otrzymałem ostrzeżenie o treściach wrażliwych?",
+      "answer": "Ostrzeżenie pojawia się gdy Google SafeSearch wykryje treści dla dorosłych (poziom 3+), medyczne (poziom 4+) lub przemoc (poziom 4+). Materiały dziennikarskie często zawierają drastyczne treści - system cię o tym informuje, ale pozwala kontynuować analizę. To narzędzie dla profesjonalistów, którzy sami oceniają stosowność materiału."
     },
     {
       "id": 22,
-      "question": "Co się stanie jeśli przesłę zdjęcie w złym formacie?",
-      "answer": "System automatycznie sprawdzi format pliku przed analizą. Jeśli format nie jest obsługiwany, otrzymasz komunikat o błędzie z informacją o dozwolonych formatach. Obsługiwane formaty to: JPEG, PNG, GIF, BMP, WEBP, TIFF, ICO i MPO. Jeśli masz zdjęcie w innym formacie, przekonwertuj je najpierw na JPEG lub PNG."
+      "question": "Co oznaczają poziomy moderacji (0-5)?",
+      "answer": "Skala 0-5 to prawdopodobieństwo wystąpienia danej kategorii: 0 = nieznane, 1 = bardzo mało prawdopodobne, 2 = mało prawdopodobne, 3 = możliwe, 4 = prawdopodobne, 5 = bardzo prawdopodobne. Progi ostrzeżeń: treści dla dorosłych ≥3, treści medyczne ≥4, przemoc ≥4. Te wartości są dostosowane do dziennikarstwa."
     },
     {
       "id": 23,
-      "question": "Czy zdjęcie może być za duże?",
-      "answer": "Tak, maksymalny rozmiar pliku to 20 MB. To ograniczenie wynika z limitów Azure Computer Vision API. Jeśli Twój plik przekracza 20 MB, system wyświetli komunikat o błędzie. W takim przypadku zalecamy kompresję zdjęcia lub zmniejszenie jego rozdzielczości przed przesłaniem."
+      "question": "Jakie kategorie treści wrażliwych są sprawdzane?",
+      "answer": "System sprawdza trzy kategorie: (1) Treści dla dorosłych (adult) - nagość, pornografia, (2) Treści medyczne (medical) - zabiegi chirurgiczne, graficzne treści medyczne, (3) Przemoc (violence) - krew, broń, sceny przemocy. Każda kategoria ma osobny próg ostrzeżeń dostosowany do potrzeb dziennikarstwa."
     },
     {
       "id": 24,
-      "question": "Dlaczego system wymaga włączenia JavaScript?",
-      "answer": "Interfejs aplikacji został zbudowany w technologii Streamlit, która wymaga JavaScript do poprawnego działania. JavaScript jest niezbędny do interaktywnych elementów takich jak przesyłanie plików, wyświetlanie wyników czy nawigacja między zakładkami. Aplikacja nie zadziała poprawnie przy wyłączonym JavaScript w przeglądarce."
+      "question": "Czy system blokuje analizę zdjęć z ostrzeżeniami?",
+      "answer": "Nie, system nigdy nie blokuje analizy. Ostrzeżenia są informacyjne - pokazują wykryte kategorie i ich poziomy, ale to ty decydujesz czy kontynuować. Rozumiemy, że materiały prasowe mogą zawierać drastyczne treści z uzasadnionych powodów."
     },
     {
       "id": 25,
-      "question": "Czy mogę używać systemu na telefonie lub tablecie?",
-      "answer": "Tak, interfejs jest responsywny i działa na urządzeniach mobilnych (smartfony, tablety). Możesz przesyłać zdjęcia bezpośrednio z galerii urządzenia lub zrobić nowe zdjęcie aparatem. Jednak ze względu na większą ilość informacji wyświetlanych jednocześnie, zalecamy korzystanie z komputera dla najlepszego doświadczenia."
+      "question": "Co się stanie jeśli prześlę zdjęcie z mocnymi treściami?",
+      "answer": "System przeanalizuje je normalnie. Google SafeSearch wykryje i oznaczy kategorię (np. przemoc 5/5, treści dla dorosłych 4/5), wyświetli ostrzeżenie, ale NIE zablokuje analizy. GPT-4.1 dostanie kontekst o wrażliwych treściach i wygeneruje opis uwzględniający ten fakt. To narzędzie dla profesjonalistów."
     },
     {
       "id": 26,
-      "question": "Jak działa system FAQ?",
-      "answer": "System FAQ wykorzystuje technologię semantic search opartą na embeddingach text-embedding-3-small. Gdy zadajesz pytanie, system generuje embedding (wektor numeryczny) Twojego pytania i porównuje go z embeddingami wszystkich pytań w bazie FAQ używając podobieństwa kosinusowego. Następnie GPT-5 generuje naturalną odpowiedź na podstawie najlepiej dopasowanych FAQ-ów. To pozwala znaleźć odpowiedzi nawet jeśli zadasz pytanie innymi słowami niż w bazie."
+      "question": "Jak system radzi sobie z treściami wrażliwymi w opisach?",
+      "answer": "Gdy Google SafeSearch wykryje treści wrażliwe (przemoc 4+, treści seksualne 3+, medyczne 4+), GPT-4.1 otrzymuje szczegółowe instrukcje: może nazwać rzeczy wprost jeśli stosowne (np. 'treści pornograficzne'), unika naiwnych opisów, skupia się na kontekście społecznym/kulturowym. Nie generuje ostrzeżeń w opisie - są one już w interfejsie."
     },
     {
       "id": 27,
-      "question": "Czy odpowiedzi FAQ są generowane na żywo czy z bazy danych?",
-      "answer": "To hybrydowe podejście. Pytania i odpowiedzi są zapisane w bazie danych (plik JSON), ale gdy zadajesz pytanie, GPT-5 generuje odpowiedź na żywo, formułując ją naturalnie na podstawie najlepiej dopasowanych FAQ-ów z bazy. Dzięki temu odpowiedzi są bardziej naturalne i kontekstowe niż zwykłe cytaty z bazy."
+      "question": "Jakiego modelu GPT używa system?",
+      "answer": "System używa OpenAI GPT-4.1 (standardowe API, nie Azure). GPT-4.1 generuje opisy w języku polskim na podstawie danych z Google Vision oraz podanego kontekstu. Model jest instruowany aby tworzyć opisy w stylu dziennikarskim, unikać spekulacji i skupiać się na faktach."
     },
     {
       "id": 28,
-      "question": "Co oznacza procent trafności dopasowania w FAQ?",
-      "answer": "Procent trafności (similarity score) pokazuje jak bardzo Twoje pytanie jest podobne do pytania z bazy FAQ. Wynik 100% oznacza niemal identyczne pytanie, 80-100% to wysokie dopasowanie, 60-80% średnie, poniżej 60% niskie. System używa progu 50% - jeśli najlepsze dopasowanie jest poniżej 50%, otrzymasz komunikat że nie znaleziono odpowiedzi."
+      "question": "Dlaczego opisy są po polsku mimo że Google wykrywa po angielsku?",
+      "answer": "Google Vision zwraca wyniki w języku angielskim (etykiety, web entities), ale GPT-4.1 jest instruowany aby wygenerować opis i tagi w języku polskim. Model tłumaczy i adaptuje informacje z analizy do naturalnego polskiego tekstu dziennikarskiego."
     },
     {
       "id": 29,
-      "question": "Ile pytań zawiera baza FAQ?",
-      "answer": "Baza FAQ zawiera obecnie około 100 pytań i odpowiedzi obejmujących wszystkie aspekty systemu: obsługę, technologie, bezpieczeństwo, ograniczenia, koszty oraz rozwiązywanie problemów. Lista FAQ jest regularnie aktualizowana."
+      "question": "Co to jest 'reasoning_effort' w GPT-4.1?",
+      "answer": "Reasoning_effort to parametr kontrolujący głębokość rozumowania. Dla opisów zdjęć nie potrzeba rozszerzonego rozumowania, wystarczy bezpośrednia synteza danych wizualnych."
     },
     {
       "id": 30,
-      "question": "Czy mogę zaproponować dodanie nowego pytania do FAQ?",
-      "answer": "W wersji POC nie ma jeszcze funkcji zgłaszania nowych pytań przez użytkowników, ale ta funkcjonalność jest planowana. Jeśli nie znajdziesz odpowiedzi na swoje pytanie, możesz skontaktować się z zespołem deweloperskim, który rozważy dodanie go do bazy FAQ."
+      "question": "Co zawiera wygenerowany opis zdjęcia?",
+      "answer": "Opis to 1-2 zdania w stylu dziennikarskim, nadające się do publikacji pod zdjęciem. System unika oczywistych opisów ('na zdjęciu widać'), nie opisuje wyglądu ludzi, skupia się na kontekście społecznym i faktach. Wykorzystuje podany kontekst (ręczny lub wykryty automatycznie) oraz wyniki analizy wizualnej."
     },
     {
       "id": 31,
-      "question": "Co to są 'Dense Captions' w wynikach analizy?",
-      "answer": "Dense Captions to szczegółowe opisy różnych regionów zdjęcia generowane przez Azure Computer Vision. Zamiast jednego ogólnego opisu, system identyfikuje wiele obszarów obrazu (np. 'osoba po lewej', 'tłum w tle', 'napis na transparencie') i opisuje każdy z nich osobno. Te informacje są następnie wykorzystywane przez GPT-5 do stworzenia kompletnego opisu zdjęcia."
+      "question": "Ile tagów generuje system?",
+      "answer": "System generuje 5-8 tagów na podstawie analizy wizualnej (wykryte obiekty, tekst OCR, web entities) oraz podanego kontekstu. Tagi to pojedyncze słowa lub krótkie frazy w języku polskim, ułatwiające kategoryzację i wyszukiwanie zdjęć."
     },
     {
       "id": 32,
-      "question": "Dlaczego widzę tekst w języku angielskim w wynikach debug?",
-      "answer": "W trybie debug wyświetlane są surowe wyniki z Azure Computer Vision, które zwraca dane w języku angielskim. Te dane są następnie przetwarzane przez GPT-5, który generuje polski opis i tagi. Końcowy rezultat (caption i tags) jest zawsze w języku polskim - angielskie dane są widoczne tylko w sekcji debug dla celów diagnostycznych."
+      "question": "Dlaczego niektóre tagi są po angielsku?",
+      "answer": "GPT-4.1 jest instruowany aby generować tagi po polsku, ale czasem zachowuje angielskie nazwy własne (np. 'Trump', 'White House') lub specjalistyczne terminy bez dobrego polskiego odpowiednika. Możesz je edytować ręcznie jeśli potrzebujesz 100% polskich tagów."
     },
     {
       "id": 33,
-      "question": "Co to jest 'confidence score' przy tagach?",
-      "answer": "Confidence score (poziom pewności) to wartość od 0 do 1 pokazująca jak bardzo Azure Computer Vision jest pewny danego tagu. Wartość 0,95 oznacza 95% pewności, że dany obiekt znajduje się na zdjęciu. Wyższe wartości oznaczają większą wiarygodność. System zazwyczaj zwraca tylko tagi z confidence score powyżej 0,5."
+      "question": "Jak długo trwa analiza zdjęcia?",
+      "answer": "Typowa analiza trwa 3-8 sekund. Czas składa się z: wykrywania kontekstu (1-2s jeśli używane), moderacji treści (1s), analizy wizualnej Google Vision (1-2s) oraz generowania opisu przez GPT-4.1 (2-4s). Większe pliki i bardziej skomplikowane obrazy mogą wymagać więcej czasu."
     },
     {
       "id": 34,
-      "question": "Czy system wykrywa zabytki i znane miejsca?",
-      "answer": "Tak, Azure Computer Vision posiada rozbudowaną bazę zabytków i znanych miejsc (landmarks). Jeśli na zdjęciu znajduje się rozpoznawalny zabytek (np. Wawel, Pałac Kultury, Big Ben), system automatycznie zidentyfikuje go i uwzględni w opisie. Funkcja działa dla tysięcy znanych miejsc na całym świecie."
+      "question": "Co zrobić jeśli analiza trwa bardzo długo?",
+      "answer": "Standardowa analiza to 3-8 sekund. Jeśli trwa dłużej: (1) sprawdź rozmiar pliku - bardzo duże obrazy (>10MB) są wolniejsze, (2) sprawdź internet - API wymaga stabilnego połączenia, (3) odśwież stronę i spróbuj ponownie, (4) jeśli problem się powtarza - zgłoś błąd z informacją o rozmiarze i formacie pliku."
     },
     {
       "id": 35,
-      "question": "Jak system radzi sobie ze zdjęciami w nocy lub przy słabym oświetleniu?",
-      "answer": "Azure Computer Vision 4.0 jest trenowany na zróżnicowanych danych, w tym zdjęciach nocnych i przy słabym oświetleniu. Jednak jakość analizy może być niższa dla bardzo ciemnych lub niewyraźnych obrazów. Zalecamy przesyłanie zdjęć o dobrej jakości i wystarczającej jasności dla najlepszych rezultatów."
+      "question": "Dlaczego czasem opis jest ogólny mimo podania kontekstu?",
+      "answer": "Możliwe przyczyny: (1) kontekst jest za krótki lub niejasny - dodaj więcej szczegółów, (2) Google Vision nie wykrył elementów pasujących do kontekstu - sprawdź 'debug', (3) GPT-4.1 uznał kontekst za niepewny - upewnij się że informacje są faktyczne, (4) zdjęcie jest niskiej jakości - prześlij większy/wyraźniejszy obraz."
     },
     {
       "id": 36,
-      "question": "Czy system działa z czarno-białymi zdjęciami?",
-      "answer": "Tak, system analizuje zarówno zdjęcia kolorowe jak i czarno-białe. Azure Computer Vision wykrywa obiekty, sceny i tekst niezależnie od tego czy obraz jest kolorowy czy monochromatyczny. Jednak dla zdjęć kolorowych dostępne są dodatkowe informacje o dominujących kolorach."
+      "question": "Czy mogę zobaczyć surowe wyniki analizy?",
+      "answer": "Tak, po analizie rozwiń sekcję 'Szczegóły analizy wizyjnej (debug)' aby zobaczyć pełny JSON z wynikami Google Vision: wszystkie wykryte obiekty, etykiety z ocenami pewności, tekst OCR, web entities, kolory dominujące. To przydatne do debugowania lub weryfikacji."
     },
     {
       "id": 37,
-      "question": "Czy uwzględnione są 'dominujące kolory'?",
-      "answer": "Nie, dominujący kolor nie ma wpływu na opis ani tagi."
+      "question": "Czy wyniki są zapisywane?",
+      "answer": "Nie, obecnie system nie zapisuje ani historii uploadowanych zdjęć, ani wygenerowanych opisów. Każda sesja jest niezależna. Jeśli chcesz zachować wyniki, skopiuj wygenerowany opis i tagi przed zamknięciem przeglądarki lub przesłaniem kolejnego zdjęcia."
     },
     {
       "id": 38,
-      "question": "Czy mogę analizować screenshoty z filmów lub transmisji?",
-      "answer": "Tak, system analizuje dowolne obrazy statyczne, w tym screenshoty z materiałów wideo. Pamiętaj jednak, że system nie analizuje wideo jako takiego - możesz przesłać tylko pojedyncze klatki zapisane jako zdjęcia."
+      "question": "Czy mogę analizować zdjęcia z innych źródeł niż upload?",
+      "answer": "Obecnie system obsługuje tylko bezpośredni upload plików z dysku. Nie ma możliwości podania URL obrazu lub przesłania z Google Drive/Dropbox. Pobierz zdjęcie lokalnie, a następnie prześlij przez interfejs."
     },
     {
-    "id": 39,
-    "question": "Czy planowane są nowe funkcje w systemie?",
-    "answer": "Tak, planowane funkcje to między innymi: batch processing (analiza wielu zdjęć naraz), eksport do różnych formatów, integracja API z systemami CMS, historia analiz, edycja opisów w interfejsie, wsparcie dla wideo (analiza klatek) oraz zaawansowane wyszukiwanie w historii."
+      "id": 39,
+      "question": "Ile kosztuje jedna analiza?",
+      "answer": "Koszty techniczne: Google Cloud Vision (~$0.0015/obraz dla 5 feature'ów) + Google SafeSearch (~$0.0015/obraz) + OpenAI GPT-4.1 (~$0.0015/opis) = około $0.0045 (~0.02 PLN) na jedno zdjęcie. Dla użytkownika POC jest to bezpłatne - to wewnętrzny koszt infrastruktury."
     },
     {
-    "id": 40,
-    "question": "Gdzie mogę znaleźć dokumentację techniczną systemu?",
-    "answer": "Szczegółowa dokumentacja techniczna (architektura, API endpoints, formaty danych) będzie dostępna w wersji produkcyjnej. Obecnie dokumentacja jest dostępna w README projektu na repozytorium GitHub oraz w tym systemie FAQ."
+      "id": 40,
+      "question": "Czy dane są bezpieczne?",
+      "answer": "Przesłane zdjęcia są przetwarzane przez Google Cloud Vision i OpenAI API zgodnie z ich politykami prywatności. Obrazy nie są zapisywane przez nasz system. Google i OpenAI mogą używać danych do poprawy swoich modeli (chyba że włączono opt-out). Nie przesyłaj materiałów objętych tajemnicą dziennikarską bez odpowiednich zgód."
     },
     {
       "id": 41,
-      "question": "Co oznacza ostrzeżenie 'Przemoc - poziom 6/6'?",
-      "answer": "To najwyższy poziom ostrzeżenia dla kategorii przemocy wykryty przez Azure Content Safety. Poziom 6 oznacza, że zdjęcie zawiera bardzo drastyczne treści związane z przemocą. System nie blokuje analizy - materiały dziennikarskie często dokumentują konflikty i wypadki. Ostrzeżenie służy informacji, a decyzja o kontynuacji należy do użytkownika."
+      "question": "Czy mogę używać tego systemu komercyjnie?",
+      "answer": "To POC (Proof of Concept) do celów demonstracyjnych i testowych. Komercyjne użycie wymaga: (1) własnego konta Google Cloud z billing, (2) własnego klucza OpenAI API, (3) wdrożenia na własnej infrastrukturze, (4) zgodności z regulaminem Google i OpenAI dotyczącym użycia komercyjnego."
     },
     {
       "id": 42,
-      "question": "Jakie są progi moderacji dla różnych kategorii treści?",
-      "answer": "System używa progów dostosowanych do dziennikarstwa: treści seksualne (próg 2/6), mowa nienawiści (próg 4/6), samookaleczenie (próg 4/6), przemoc (próg 5/6). Oznacza to, że materiały prasowe o tematyce społecznej czy konfliktowej nie będą niepotrzebnie flagowane, ale ekstremalne treści otrzymają ostrzeżenie."
+      "question": "Co to jest FAQ system i jak z niego korzystać?",
+      "answer": "Zakładka FAQ zawiera najczęściej zadawane pytania o system. Możesz wpisać pytanie w pole tekstowe - system użyje embeddings (text-embedding-3-small) do znalezienia najbardziej podobnych pytań z bazy, a GPT-4.1 sformułuje naturalną odpowiedź. Im bardziej precyzyjne pytanie, tym lepsza odpowiedź."
     },
     {
       "id": 43,
-      "question": "Czy ostrzeżenie o treści wrażliwej wpływa na jakość opisu?",
-      "answer": "Tak, ale pozytywnie. Gdy system wykryje wrażliwe treści, przekazuje tę informację do GPT-5, który wtedy używa dojrzałego, dziennikarskiego tonu zamiast naiwnego czy eufemistycznego języka. Opisy są wtedy bardziej profesjonalne i odpowiednie do kontekstu prasowego."
+      "question": "Jak działają embeddingi w systemie FAQ?",
+      "answer": "System używa OpenAI text-embedding-3-small do konwersji pytań na wektory numeryczne. Twoje pytanie jest porównywane z wszystkimi pytaniami w bazie przy użyciu cosine similarity. Top 3 najbardziej podobne pytania (similarity >0.3) są przekazywane do GPT-4.1, który formułuje spersonalizowaną odpowiedź."
     },
     {
       "id": 44,
-      "question": "Dlaczego mój opis jest zbyt ogólnikowy?",
-      "answer": "Jeśli opis wydaje się zbyt ogólny, najprawdopodobniej brakuje kontekstu. System bazuje tylko na tym co widzi na zdjęciu plus informacje które podasz w polu 'Dodatkowy kontekst'. Jeśli zdjęcie przedstawia konkretne osoby, wydarzenia czy miejsca - koniecznie wpisz te informacje w pole kontekstowe."
+      "question": "Jak mogę uzyskać najlepsze wyniki z systemu?",
+      "answer": "Najlepsze praktyki: (1) Użyj wysokiej jakości zdjęć (>150px, wyraźne), (2) Zawsze podaj kontekst - użyj automatycznego wykrywania lub wpisz ręcznie, (3) Dla zdjęć osób podaj nazwiska w kontekście, (4) Dla zdjęć miejsc podaj nazwy lokalizacji, (5) Sprawdź 'debug' jeśli wynik nie satysfakcjonuje - zobacz co wykrył Google Vision."
     },
     {
       "id": 45,
-      "question": "Czy mogę wyczyścić pole kontekstu przed nową analizą?",
-      "answer": "Tak, system automatycznie czyści pole 'Dodatkowy kontekst' gdy przesyłasz nowe zdjęcie. Wykrywa zmianę pliku po nazwie i resetuje wcześniej wpisane informacje. Możesz też ręcznie wyczyścić pole przed kolejną analizą tego samego zdjęcia."
+      "question": "Czy system obsługuje zdjęcia w formacie RAW?",
+      "answer": "Nie, system nie obsługuje formatów RAW (CR2, NEF, ARW itp.). Przed przesłaniem skonwertuj zdjęcia do JPEG lub PNG. Większość programów do obróbki zdjęć (Lightroom, Photoshop, GIMP) umożliwia eksport do tych formatów."
     },
     {
       "id": 46,
-      "question": "Ile tagów generuje system?",
-      "answer": "System generuje od 5 do 8 tagów dla każdego zdjęcia. Tagi są wybierane na podstawie wykrytych obiektów, scen oraz podanego kontekstu."
+      "question": "Czy system działa offline?",
+      "answer": "Nie, system wymaga stałego połączenia z internetem. Wszystkie komponenty (Google Cloud Vision, OpenAI GPT-4.1, Streamlit Cloud) działają w chmurze i wymagają dostępu online. Brak internetu uniemożliwi analizę zdjęć."
     },
     {
       "id": 47,
-      "question": "Czy tagi są zawsze w języku polskim?",
-      "answer": "Tak, wszystkie tagi są generowane w języku polskim przez GPT-5. Nawet jeśli Azure Computer Vision wykryje obiekty z angielskimi nazwami, GPT-5 przetłumaczy je i sformatuje jako polskie tagi odpowiednie dla polskich mediów."
+      "question": "Czy mogę przesłać wiele zdjęć jednocześnie?",
+      "answer": "Nie, obecnie system obsługuje tylko analizę pojedynczych zdjęć. Każde zdjęcie musi być przesłane i przeanalizowane osobno. Funkcja batch processing (analiza wielu zdjęć naraz) nie jest dostępna w wersji POC."
     },
     {
       "id": 48,
-      "question": "Co oznacza komunikat 'raw' w wynikach?",
-      "answer": "Jeśli zamiast strukturalnego JSON-a z caption i tags widzisz pole 'raw', oznacza to że GPT-5 zwrócił odpowiedź w nieprawidłowym formacie (nie JSON). To rzadki błąd, ale może się zdarzyć. W takim przypadku spróbuj przeanalizować zdjęcie ponownie, dodaj więcej kontekstu lub skopiuj opis z pola 'json'."
+      "question": "Dlaczego moje zdjęcie nie zostało przesłane?",
+      "answer": "Możliwe przyczyny: (1) Plik przekracza 20 MB - skompresuj go, (2) Format nie jest obsługiwany - użyj JPG/PNG, (3) Wymiary poza zakresem 50-16000px, (4) Plik jest uszkodzony - otwórz w edytorze i zapisz ponownie, (5) Brak połączenia z internetem."
     },
     {
       "id": 49,
-      "question": "Dlaczego analiza czasami trwa dłużej niż zwykle?",
-      "answer": "Czas analizy zależy od wielu czynników: rozmiaru pliku, złożoności obrazu (ilość obiektów, tekstu), aktualnego obciążenia serwerów Azure oraz połączenia internetowego. Typowy czas to 5-10 sekund, ale przy dużych plikach lub skomplikowanych scenach może to potrwać do 15 sekund."
+      "question": "Co zrobić gdy system zwraca błąd?",
+      "answer": "Kroki diagnostyczne: (1) Odśwież stronę (F5) i spróbuj ponownie, (2) Sprawdź rozmiar i format pliku, (3) Spróbuj mniejszego/prostszego zdjęcia testowego, (4) Sprawdź połączenie z internetem, (5) Jeśli błąd się powtarza - zapisz komunikat błędu i zgłoś problem z dokładnym opisem (rozmiar pliku, format, treść błędu)."
     },
     {
       "id": 50,
-      "question": "Co zrobić gdy analiza zawiesza się na 'Analizuję zdjęcie...'?",
-      "answer": "Jeśli spinner 'Analizuję zdjęcie...' nie znika po 30 sekundach, najprawdopodobniej wystąpił problem z połączeniem lub timeout API. Odśwież stronę i spróbuj ponownie. Jeśli problem się powtarza, sprawdź swoje połączenie internetowe lub spróbuj z mniejszym plikiem."
+      "question": "Czy system wykrywa wszystkie obiekty na zdjęciu?",
+      "answer": "Google Vision wykrywa setki kategorii obiektów z bardzo wysoką dokładnością, ale nie jest bezbłędny. Małe, nieostre, częściowo zasłonięte lub nietypowe obiekty mogą nie być wykryte. System działa najlepiej z wyraźnymi, dobrze oświetlonymi zdjęciami o standardowej kompozycji."
     },
     {
       "id": 51,
-      "question": "Czy system cache'uje wyniki analizy?",
-      "answer": "Nie, każda analiza jest wykonywana na żywo. System nie przechowuje historii ani nie cache'uje wyników. Oznacza to, że przeanalizowanie tego samego zdjęcia dwa razy może dać nieznacznie różne wyniki (szczególnie w opisie, gdzie GPT-5 używa elementu losowości)."
+      "question": "Czy mogę eksportować wyniki do pliku?",
+      "answer": "Obecnie brak wbudowanej funkcji eksportu. Możesz ręcznie skopiować wygenerowany opis i tagi. Dla eksportu JSON rozwiń sekcję 'Wyniki w JSON' i skopiuj zawartość. W przyszłości planowany jest eksport do CSV/JSON oraz integracja z systemami CMS."
     },
     {
       "id": 52,
-      "question": "Dlaczego ten sam opis jest nieco inny przy ponownej analizie?",
-      "answer": "GPT-5 używa parametru 'temperature' ustawionego na 0.2, co wprowadza niewielką losowość do odpowiedzi. To celowe - pozwala na bardziej naturalne, różnorodne opisy zamiast identycznych powtórzeń. Mimo niewielkich różnic w stylistyce, treść merytoryczna powinna być spójna."
-    },
-    {
-      "id": 53,
-      "question": "Co to jest 'temperature' w kontekście GPT?",
-      "answer": "Temperature to parametr kontrolujący losowość odpowiedzi GPT. Wartość 0.0 daje zawsze identyczne odpowiedzi (deterministyczne), wartość 1.0 bardzo kreatywne i zróżnicowane. System używa 0.2 - niskiej wartości zapewniającej spójność merytoryczną przy niewielkiej różnorodności stylistycznej."
-    },
-    {
-    "id": 54,
-    "question": "Ile tokenów zużywa jedna analiza?",
-    "answer": "Typowa analiza zużywa około 400-600 tokenów wejściowych (prompt z danymi z Computer Vision + kontekst) oraz 100-200 tokenów wyjściowych (wygenerowany opis i tagi). Łącznie to około 500-800 tokenów na analizę, co przekłada się na koszt ~0.002 USD za GPT-5."
-    },
-    {
-    "id": 55,
-    "question": "Co to są embeddingi w systemie FAQ?",
-    "answer": "Embeddingi to numeryczne reprezentacje tekstu (wektory liczb), które uchwytują semantyczne znaczenie pytań. System generuje embedding dla Twojego pytania i porównuje go z embeddingami wszystkich FAQ-ów używając podobieństwa kosinusowego. To pozwala znaleźć odpowiedzi nawet jeśli używasz innych słów niż w oryginalnym pytaniu."
-    },
-    {
-    "id": 56,
-    "question": "Czy embeddingi FAQ są generowane za każdym razem?",
-    "answer": "Nie, embeddingi dla FAQ są generowane tylko raz przy pierwszym uruchomieniu i zapisywane w cache (plik .pkl). Przy kolejnych uruchomieniach system wczytuje je z cache, co znacząco przyspiesza działanie. Cache jest automatycznie regenerowany gdy plik FAQ zostanie zmodyfikowany."
-    },
-    {
-    "id": 57,
-    "question": "Jaki model embeddingów używa system?",
-    "answer": "System używa modelu text-embedding-3-small od OpenAI/Azure, który generuje wektory o wymiarze 1536. To nowoczesny model zoptymalizowany pod kątem jakości i kosztu, doskonale radzący sobie z językiem polskim."
-    },
-    {
-    "id": 58,
-    "question": "Czy mogę eksportować wyniki analizy?",
-    "answer": "Wyniki są dostępne w formacie JSON w sekcji 'Opis i tagi w JSON', którą możesz rozwinąć. Możesz skopiować ten JSON i wkleić go do swojego systemu redakcyjnego lub zapisać lokalnie. Automatyczny eksport do pliku nie jest jeszcze zaimplementowany w POC."
-    },
-    {
-    "id": 59,
-    "question": "Co zawiera JSON z wynikami?",
-    "answer": "JSON zawiera dwa główne pola: 'caption' (opis zdjęcia jako string) oraz 'tags' (lista tagów jako tablica stringów). Dodatkowo w trybie debug dostępny jest pełny 'vision_summary' z surowymi danymi z Azure Computer Vision zawierający dense captions, confidence scores, OCR i więcej."
-    },
-    {
-    "id": 60,
-    "question": "Czy system obsługuje zdjęcia panoramiczne?",
-    "answer": "Tak, system obsługuje zdjęcia panoramiczne o ile mieszczą się w limitach rozmiaru (20 MB, maksymalnie 16000 pikseli w każdym wymiarze). Dla bardzo szerokich panoram Azure Computer Vision może identyfikować wiele odrębnych regionów, co zostanie uwzględnione w dense captions."
-    },
-    {
-    "id": 61,
-    "question": "Czy mogę analizować zdjęcia produktów e-commerce?",
-    "answer": "Tak, system świetnie radzi sobie z produktami - wykryje obiekty czy tekst na opakowaniach. Jednak opisy są dostosowane do stylu dziennikarskiego, więc dla e-commerce mogą być zbyt formalne. Możesz jednak używać tagów jako bazę dla kategoryzacji produktów."
-    },
-    {
-    "id": 62,
-    "question": "Czy system wykrywa znaki wodne i logo?",
-    "answer": "Funkcja OCR wykryje tekst w znakach wodnych jeśli jest czytelny. Azure Computer Vision może też zidentyfikować niektóre logo jako obiekty. Jednak celowe usuwanie znaków wodnych czy obchodzenie zabezpieczeń autorskich jest niezgodne z polityką użytkowania."
-    },
-    {
-    "id": 63,
-    "question": "Jak system radzi sobie z memami i infografikami?",
-    "answer": "OCR wykryje tekst na memach i infografikach, a Computer Vision rozpozna podstawowe obiekty. GPT-5 spróbuje opisać treść, ale nie zawsze zrozumie kontekst kulturowy lub humor. Dla najlepszych wyników dodaj kontekst w polu dodatkowym."
-    },
-    {
-    "id": 64,
-    "question": "Czy mogę analizować zdjęcia dokumentów (faktury, umowy)?",
-    "answer": "System wykryje tekst na dokumentach przez OCR, ale nie został zaprojektowany do analizy dokumentów. Dla przetwarzania dokumentów biznesowych zalecamy dedykowane rozwiązania jak Azure Form Recognizer czy Azure Document Intelligence."
-    },
-    {
-    "id": 65,
-    "question": "Dlaczego system nie wykrył całego tekstu na zdjęciu?",
-    "answer": "OCR działa najlepiej z wyraźnym, kontrastowym tekstem. Jeśli tekst jest nieostry, za mały, napisany odręcznie, pod kątem lub ma niski kontrast z tłem, może nie zostać wykryty. Dla najlepszych wyników tekstowych używaj zdjęć wysokiej jakości z dobrym oświetleniem."
-    },
-    {
-    "id": 66,
-    "question": "Czy OCR obsługuje język polski?",
-    "answer": "Tak, Azure Computer Vision OCR obsługuje ponad 100 języków, w tym polski. Automatycznie wykrywa język tekstu na zdjęciu. Rozpoznaje zarówno drukowany tekst jak i niektóre odręczne pismo (choć z niższą dokładnością)."
-    },
-    {
-    "id": 67,
-    "question": "Co zrobić gdy zdjęcie jest obrócone?",
-    "answer": "Azure Computer Vision automatycznie wykrywa orientację zdjęcia i przetwarza je poprawnie. Nie musisz ręcznie obracać obrazów przed przesłaniem. System radzi sobie z obrazami obróconymi o 90, 180 czy 270 stopni."
-    },
-    {
-    "id": 68,
-    "question": "Czy system działa offline?",
-    "answer": "Nie, system wymaga stałego połączenia z internetem. Wszystkie komponenty (Computer Vision, Content Safety, GPT-5) są usługami chmurowymi Azure wymagającymi połączenia API. Aplikacja nie ma trybu offline."
-    },
-    {
-    "id": 69,
-    "question": "Jak szybkie jest moje połączenie potrzebne do działania systemu?",
-    "answer": "Zalecane minimum to połączenie o prędkości 5 Mbps dla komfortowej pracy. Przesyłanie dużych zdjęć (15-20 MB) przy wolnym łączu może wydłużyć czas analizy. System działa przez HTTPS, więc transfer danych jest szyfrowany."
-    },
-    {
-    "id": 70,
-    "question": "Czy mogę używać VPN podczas pracy z systemem?",
-    "answer": "Tak, system działa poprawnie przez VPN. Wszystkie połączenia do Azure API są szyfrowane przez HTTPS niezależnie od VPN. Niektóre VPN-y mogą nieznacznie spowolnić transfer, ale nie powinno to znacząco wpłynąć na działanie."
-    },
-    {
-    "id": 71,
-    "question": "Jakie przeglądarki są obsługiwane?",
-    "answer": "System działa we wszystkich nowoczesnych przeglądarkach: Chrome, Firefox, Safari, Edge (wersje z ostatnich 2 lat). Zalecamy Chrome lub Firefox dla najlepszej wydajności. Internet Explorer nie jest obsługiwany."
-    },
-    {
-    "id": 72,
-    "question": "Czy potrzebuję jakichś wtyczek do przeglądarki?",
-    "answer": "Nie, system działa natywnie w przeglądarce bez dodatkowych wtyczek. Wymaga tylko włączonego JavaScript oraz ciasteczek (dla obsługi sesji Streamlit). Nie są potrzebne Flash, Java ani żadne inne rozszerzenia."
-    },
-    {
-    "id": 73,
-    "question": "Co to znaczy komunikat 'Session state cleared'?",
-    "answer": "Streamlit używa session state do zapamiętywania danych między interakcjami (np. poprzedniego kontekstu). Jeśli odświeżysz stronę, session state zostanie wyczyszczony. To normalne zachowanie - po prostu przesłać zdjęcie ponownie."
-    },
-    {
-    "id": 74,
-    "question": "Dlaczego po odświeżeniu strony zniknęły wyniki?",
-    "answer": "System nie przechowuje historii sesji - wszystkie wyniki są tymczasowe i istnieją tylko w bieżącej sesji przeglądarki. Po odświeżeniu strony sesja jest resetowana. Skopiuj ważne wyniki przed odświeżeniem lub zachowaj je w swoim systemie redakcyjnym."
-    },
-    {
-    "id": 75,
-    "question": "Czy mogę mieć otwarte wiele zakładek z systemem?",
-    "answer": "Tak, każda zakładka przeglądarki to osobna sesja z własnym stanem. Możesz analizować różne zdjęcia w różnych zakładkach jednocześnie. Sesje nie współdzielą danych między sobą."
-    },
-    {
-    "id": 76,
-    "question": "Co oznacza błąd 'OpenAI API error'?",
-    "answer": "To komunikat o problemie z połączeniem do Azure OpenAI. Możliwe przyczyny: tymczasowa niedostępność usługi, przekroczenie limitów API, błąd konfiguracji lub problem z siecią. Spróbuj ponownie za chwilę. Jeśli problem się powtarza, skontaktuj się z administratorem."
-    },
-    {
-    "id": 77,
-    "question": "Co oznacza błąd 'Content Safety API error'?",
-    "answer": "To problem z usługą Azure Content Safety. W takim przypadku system automatycznie przyjmuje że treść jest bezpieczna i kontynuuje analizę (failsafe behavior). Nie wpływa to na jakość opisów, tylko brak będzie sprawdzenia moderacji treści."
-    },
-    {
-    "id": 78,
-    "question": "Czy system loguje błędy dla diagnostyki?",
-    "answer": "W wersji POC błędy są wyświetlane użytkownikowi w interfejsie. Niektóre błędy są również logowane w konsoli przeglądarki (F12) dla celów debugowania. W wersji produkcyjnej będzie pełny system logowania i monitorowania błędów."
-    },
-    {
-    "id": 79,
-    "question": "Jak często są aktualizowane modele AI?",
-    "answer": "Używamy najnowszych wersji modeli dostępnych w Azure: GPT-5 oraz Computer Vision 4.0 (Florence). Microsoft regularnie aktualizuje te modele, ale konkretne wersje API są stabilne przez długi czas. Aktualizacje modeli są transparentne dla użytkownika."
-    },
-    {
-    "id": 80,
-    "question": "Czy opisy mogą zawierać nieprawdziwe informacje?",
-    "answer": "AI może czasami 'halucynować' - generować informacje które wydają się prawdopodobne, ale nie są prawdziwe. Dlatego ZAWSZE zalecamy weryfikację opisów przez dziennikarza, szczególnie faktów, nazwisk, dat czy liczb. System to narzędzie wspomagające, nie zastępujące dziennikarza."
-    },
-    {
-    "id": 81,
-    "question": "Czy mogę używać systemu do weryfikacji fake newsów?",
-    "answer": "System może pomóc zidentyfikować co jest na zdjęciu, ale nie weryfikuje autentyczności ani prawdziwości treści. Nie wykrywa deepfake'ów, photoshopowanych obrazów czy zdjęć wyrwanych z kontekstu. Do weryfikacji fake newsów potrzebne są dedykowane narzędzia forensic."
-    },
-    {
-    "id": 82,
-    "question": "Czy system wykrywa zdjęcia wygenerowane przez AI?",
-    "answer": "Nie, Azure Computer Vision nie ma funkcji wykrywania obrazów generowanych przez AI (DALL-E, Midjourney, Stable Diffusion). Analizuje je jak zwykłe zdjęcia. Dla detekcji AI-generated content potrzebne są specjalistyczne narzędzia."
-    },
-    {
-    "id": 83,
-    "question": "Jak system radzi sobie z zdjęciami artystycznymi?",
-    "answer": "System rozpoznaje obiekty i sceny również w sztuce (malarstwo, rzeźby, fotografia artystyczna). Jednak interpretacja kontekstu artystycznego może być ograniczona - GPT-5 skupia się na widocznych elementach. Dla zdjęć dzieł sztuki warto dodać kontekst (artysta, tytuł, okres)."
-    },
-    {
-    "id": 84,
-    "question": "Czy mogę analizować zdjęcia makro lub mikroskopowe?",
-    "answer": "System może analizować zdjęcia makro, ale dokładność zależy od tego czy obiekty są rozpoznawalne. Computer Vision jest trenowany głównie na standardowych fotografiach, więc bardzo nietypowe perspektywy (mikroskopia, zdjęcia satelitarne) mogą dać gorsze wyniki."
-    },
-    {
-    "id": 85,
-    "question": "Czy system obsługuje obrazy medyczne (RTG, MRI)?",
-    "answer": "System może rozpoznać ogólny typ obrazu (RTG, MRI), ale nie został trenowany do analizy medycznej i nie powinien być używany do diagnostyki. Dla obrazowania medycznego potrzebne są dedykowane systemy certyfikowane medycznie."
-    },
-    {
-    "id": 86,
-    "question": "Jak długo są przechowywane cache embeddingi FAQ?",
-    "answer": "Plik cache z embeddingami FAQ (faq_embeddings_cache.pkl) jest przechowywany na serwerze do momentu zmiany pliku FAQ lub zmiany modelu embeddingów. Cache nie zawiera Twoich danych osobowych - tylko embeddingi pytań FAQ z bazy."
-    },
-    {
-    "id": 87,
-    "question": "Czy system zbiera statystyki użytkowania?",
-    "answer": "W wersji POC nie są zbierane szczegółowe statystyki użytkowania. Streamlit może logować podstawowe informacje (liczba sesji, błędy), ale nie są gromadzone dane o konkretnych zdjęciach czy użytkownikach. System jest zgodny z RODO."
-    },
-    {
-    "id": 88,
-    "question": "Czy mogę używać systemu komercyjnie?",
-    "answer": "Obecna wersja POC jest prototypem demonstracyjnym. Dla użytku komercyjnego potrzebna byłaby licencja produkcyjna oraz dedykowane zasoby Azure. Skontaktuj się z zespołem deweloperskim w sprawie wersji komercyjnej."
-    },
-    {
-    "id": 89,
-    "question": "Ile użytkowników może jednocześnie korzystać z systemu?",
-    "answer": "W wersji POC limit jednoczesnych użytkowników zależy od zasobów serwera Streamlit oraz limitów Azure API. Typowo system może obsłużyć 10-20 jednoczesnych użytkowników. Wersja produkcyjna mogłaby być skalowana do tysięcy użytkowników."
-    },
-    {
-    "id": 90,
-    "question": "Czy są limity dzienne liczby analiz?",
-    "answer": "W POC nie ma twardych limitów dziennych dla pojedynczego użytkownika, ale całkowity limit analiz zależy od budżetu Azure. Azure OpenAI i Computer Vision mają limity rate-limit (requesty per minute), ale są wystarczające dla normalnego użytkowania."
-    },
-    {
-    "id": 91,
-    "question": "Co się stanie gdy przekroczę limity API?",
-    "answer": "Przy przekroczeniu limitów Azure API otrzymasz komunikat błędu o rate limiting. System poprosi Cię o poczekanie chwilę przed kolejną analizą. W wersji produkcyjnej można zaimplementować kolejkowanie requestów i automatyczne retry."
-    },
-    {
-    "id": 92,
-    "question": "Czy system ma SLA (Service Level Agreement)?",
-    "answer": "Wersja POC nie ma formalnego SLA. System opiera się na Azure, który gwarantuje 99,9% uptime dla swoich usług, ale POC może mieć przerwy podczas aktualizacji czy testów. Wersja produkcyjna miałaby dedykowane SLA."
-    },
-    {
-    "id": 93,
-    "question": "Kiedy system jest niedostępny z powodu maintenance?",
-    "answer": "Planowane przerwy maintenance są rzadkie i zazwyczaj ogłaszane z wyprzedzeniem. Azure automatycznie aktualizuje swoje usługi bez downtime. Jednak serwer Streamlit może wymagać sporadycznych restartów (zazwyczaj w nocy)."
-    },
-    {
-    "id": 94,
-    "question": "Czy mogę integrować system z Slackiem lub MS Teams?",
-    "answer": "W obecnej wersji nie ma gotowych integracji, ale w przyszłości możliwe będzie API pozwalające na integrację z narzędziami komunikacyjnymi. Bot mógłby przyjmować zdjęcia w Slack/Teams i zwracać opisy automatycznie."
-    },
-    {
-    "id": 95,
-    "question": "Czy system może automatycznie tagować zdjęcia w Google Photos?",
-    "answer": "Obecna wersja wymaga ręcznego przesyłania zdjęć. Automatyczna integracja z Google Photos, Dropbox czy innymi platformami chmury jest technicznie możliwa przez API, ale nie jest jeszcze zaimplementowana."
-    },
-    {
-    "id": 96,
-    "question": "Czy mogę używać systemu do opisywania obrazów w social media?",
-    "answer": "Tak, opisy mogą być używane jako alt-text dla accessibility w social media lub jako podpisy pod postami. Pamiętaj jednak że styl jest dostosowany do dziennikarstwa prasowego, więc może być zbyt formalny dla casualowych postów."
-    },
-    {
-    "id": 97,
-    "question": "Czy system obsługuje wiele języków?",
-    "answer": "Obecnie system generuje opisy tylko po polsku. GPT-5 mógłby generować w innych językach (angielski, niemiecki, francuski), ale wymagałoby to modyfikacji promptów. Ta funkcja może być dodana w przyszłych wersjach."
-    },
-    {
-    "id": 98,
-    "question": "Jak zgłosić błąd lub problem z systemem?",
-    "answer": "W wersji POC błędy można zgłaszać bezpośrednio zespołowi deweloperskiemu. W przyszłości planowany jest system ticketingu lub formularza zgłaszania problemów bezpośrednio z interfejsu aplikacji."
-    },
-    {
-    "id": 99,
-    "question": "Czy to może być podpisane Donal Tusk?",
-    "answer": "Podpisy pod zdjęcia rozbudowane tutaj dajemy kontekst, zachowanie, emocje, to nie może być podpisane Donal Tusk"
+      "question": "Jak system radzi sobie z wielojęzycznością?",
+      "answer": "System generuje opisy i tagi zawsze po polsku (GPT-4.1), ale Google Vision wykrywa tekst OCR w wielu językach (polski, angielski, niemiecki itp.). Web entities mogą być po angielsku (nazwy własne), ale finalny opis jest zawsze w języku polskim dostosowanym do polskiego dziennikarstwa."
     }
   ]
 }

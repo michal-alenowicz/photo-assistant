@@ -20,6 +20,7 @@ st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
 col1, col2 = st.columns([6, 1])
 with col1:
     st.title("Donal POC - Asystent opisywania i tagowania zdjęć")
+    st.caption("wersja Google Cloud + OpenAI API")
 
 with col2:
     st.write("")
@@ -158,12 +159,12 @@ with tab1:
             st.markdown("### ⚙️ Kontekst zdjęcia")
             
             st.markdown("""
-            **Automatyczne wykrywanie:** Google rozpozna osoby, miejsca i wydarzenia  
+            **Automatyczne wykrywanie:** web search rozpozna osoby, miejsca i wydarzenia  
             **Lub edytuj ręcznie:** Dodaj nazwiska, lokalizacje, okoliczności
             """)
             
             # Detect context button at the top
-            if st.button("🌐 Wykryj kontekst automatycznie", use_container_width=True, type="secondary"):
+            if st.button("🌐 Wykryj kontekst [zalecane!]", use_container_width=True, type="secondary"):
                 with st.spinner("Wyszukiwanie w sieci..."):
                     try:
                         # Convert image to bytes
@@ -184,16 +185,16 @@ with tab1:
                                 st.rerun()  # Refresh to show populated field
                                 st.success(f"✅ Wykryto: {web_result['suggested_context']}")
                                 
-                                # Show what was found (brief summary)
-                                if web_result['best_guess_label']:
-                                    st.info(f"🎯 {web_result['best_guess_label']}")
+                                # # Show what was found (brief summary)
+                                # if web_result['best_guess_label']:
+                                #     st.info(f"🎯 {web_result['best_guess_label']}")
                                 
-                                if web_result['web_entities']:
-                                    entities_preview = ", ".join([
-                                        f"{e['description']} ({int(e['score']*100)}%)" 
-                                        for e in web_result['web_entities'][:3]
-                                    ])
-                                    st.caption(f"📋 Wykryte: {entities_preview}")
+                                # if web_result['web_entities']:
+                                #     entities_preview = ", ".join([
+                                #         f"{e['description']} ({int(e['score']*100)}%)" 
+                                #         for e in web_result['web_entities'][:3]
+                                #     ])
+                                #     st.caption(f"📋 Wykryte: {entities_preview}")
                                 
                                 
                             else:
@@ -204,8 +205,8 @@ with tab1:
             
             # Context text area (always visible, editable)
             user_context = st.text_area(
-                "Kontekst (edytowalny):",
-                value=st.session_state.context_input,
+                "Kontekst (edytowalny) - w dowolnym języku:",
+                placeholder="Kliknij 'Wykryj kontekst' lub wpisz ręcznie",
                 height=100,
                 help="Automatycznie wykryty kontekst lub wpisany ręcznie. Możesz edytować.",
                 key="context_input"
