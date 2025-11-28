@@ -2,6 +2,7 @@ import streamlit as st
 from image_analyzer import ImageAnalyzer
 from faq_system import FAQSystem
 from content_safety import ContentSafetyChecker
+from storage_manager import AzureStorageManager
 import json
 import io
 from PIL import Image
@@ -60,10 +61,19 @@ def init_content_safety():
         key=config.AZURE_CONTENT_SAFETY_KEY
     )
 
+# Initialize storage manager
+@st.cache_resource
+def init_storage_manager():
+    return AzureStorageManager(
+        connection_string=config.AZURE_STORAGE_CONNECTION_STRING,
+        container_name=config.AZURE_STORAGE_CONTAINER
+    )
+
 
 analyzer = init_image_analyzer()
 faq_system = init_faq_system()
 content_safety = init_content_safety()
+storage_manager = init_storage_manager()
 
 
 # Create tabs
@@ -249,6 +259,24 @@ with tab1:
                     
                     except Exception as e:
                         st.error(f"❌ Błąd: {str(e)}")
+
+                    # Save to Azure Blob Storage
+                    try:
+                        analysis_id = storage_manager.save_analysis(
+                            image_bytes=image_data,
+                            image_name=uploaded_file.name,
+                            result_json={
+                                "caption": result.get("caption"),
+                                "tags": result.get("tags"),
+                                "safety_check": safety_results
+                            },
+                            user_context=stripped_context
+                        )
+                        
+                        st.success(f"💾 Zapisano: `{analysis_id}`")
+                        
+                    except Exception as e:
+                        st.warning(f"⚠️ Zapis nieudany: {str(e)}")
 
 
 # ==================== TAB 2: FAQs ====================
