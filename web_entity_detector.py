@@ -1,4 +1,3 @@
-# web_entity_detector.py - Detect web entities and context from images
 
 from google.cloud import vision
 from google.oauth2 import service_account
@@ -133,15 +132,15 @@ class WebEntityDetector:
         if detection_result['best_guess_label']:
             context_parts.append(detection_result['best_guess_label'])
         
-        # # Add top web entities (max 5, score > 0.7 for higher confidence)
-        # high_confidence_entities = [
-        #     entity['description'] 
-        #     for entity in detection_result['web_entities'][:3]
-        #     if entity['score'] > 0.95
-        # ]
+        # Add top web entities (max 5, score > 0.7 for higher confidence)
+        high_confidence_entities = [
+            entity['description'] 
+            for entity in detection_result['web_entities'][:3]
+            if entity['score'] > 0.99
+        ]
         
-        # if high_confidence_entities:
-        #     context_parts.extend(high_confidence_entities)
+        if high_confidence_entities:
+            context_parts.extend(high_confidence_entities)
         
         # Join with commas
         return ', '.join(context_parts) if context_parts else ''

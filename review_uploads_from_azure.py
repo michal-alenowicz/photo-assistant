@@ -14,7 +14,7 @@ from datetime import datetime
 
 # Get from your .env or Streamlit secrets
 AZURE_STORAGE_CONNECTION_STRING = config.AZURE_STORAGE_CONNECTION_STRING
-CONTAINER_NAME = config.AZURE_STORAGE_CONTAINER
+CONTAINER_NAME = 'user-uploads'
 
 # ============================================================================
 # BLOB STORAGE HELPER
