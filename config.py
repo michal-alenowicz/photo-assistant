@@ -24,3 +24,9 @@ OPENAI_API_KEY = get_secret("OPENAI_API_KEY")
 OPENAI_MODEL = "gpt-4.1"
 OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 
+# ============================================================================
+# AZURE BLOB STORAGE (for saving uploads - temporary)
+# ============================================================================
+AZURE_STORAGE_CONNECTION_STRING = get_secret("AZURE_STORAGE_CONNECTION_STRING")
+AZURE_STORAGE_CONTAINER = get_secret("AZURE_STORAGE_CONTAINER", "user-uploads-google")
+

@@ -8,6 +8,7 @@ dependencies = [
     "azure-ai-vision-imageanalysis>=1.0.0",
     "azure-cognitiveservices-vision-computervision>=0.9.1",
     "azure-core>=1.36.0",
+    "azure-storage-blob>=12.27.1",
     "faiss-cpu>=1.13.0",
     "google-cloud-vision>=3.11.0",
     "image>=1.5.33",

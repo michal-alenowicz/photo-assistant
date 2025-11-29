@@ -3,6 +3,7 @@ from image_analyzer import ImageAnalyzer
 from faq_system import FAQSystem
 from content_safety_google import ContentSafetyChecker
 from web_entity_detector import WebEntityDetector
+from storage_manager import AzureStorageManager
 import json
 import io
 from PIL import Image
@@ -65,10 +66,21 @@ def init_web_detector():
         google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS
     )
 
+@st.cache_resource
+def init_storage_manager():
+    """Initialize Azure Storage Manager"""  # ← NEW
+    if config.AZURE_STORAGE_CONNECTION_STRING:
+        return AzureStorageManager(
+            connection_string=config.AZURE_STORAGE_CONNECTION_STRING,
+            container_name=config.AZURE_STORAGE_CONTAINER
+        )
+    return None
+
 analyzer = init_image_analyzer()
 faq_system = init_faq_system()
 content_safety = init_content_safety()
 web_detector = init_web_detector()
+storage_manager = init_storage_manager()
 
 
 # Create tabs
@@ -78,6 +90,8 @@ if "prev_filename" not in st.session_state:
         st.session_state.prev_filename = None
 if "context_input" not in st.session_state:
         st.session_state.context_input = ""
+if "web_context_data" not in st.session_state: 
+    st.session_state.web_context_data = None
 
 # ==================== TAB 1: IMAGE ANALYSIS ====================
 
@@ -99,6 +113,7 @@ with tab1:
         if uploaded_file.name != st.session_state.prev_filename:
             # New image detected - wipe context
             st.session_state.context_input = ""
+            st.session_state.web_context_data = None
             st.session_state.prev_filename = uploaded_file.name
     
     if uploaded_file is not None:
@@ -177,31 +192,21 @@ with tab1:
                         web_result = web_detector.detect_web_context(image_data)
                         
                         if web_result.get('error'):
-                            st.error(f"❌ Błąd wykrywania: {web_result['error']}")
+                            st.error(f"❌ Błąd: {web_result['error']}")
+                            st.session_state.web_context_data = None  # ← NEW
+                        elif web_result['suggested_context']:
+                            st.session_state.context_input = web_result['suggested_context']
+                            st.session_state.web_context_data = web_result  # ← NEW - store full result
+                            st.success(f"✅ Wykryto: {web_result['suggested_context']}")
+                            if web_result['best_guess_label']:
+                                st.info(f"🎯 {web_result['best_guess_label']}")
+                            st.rerun()
                         else:
-                            # Auto-populate context field
-                            if web_result['suggested_context']:
-                                st.session_state.context_input = web_result['suggested_context']
-                                st.rerun()  # Refresh to show populated field
-                                st.success(f"✅ Wykryto: {web_result['suggested_context']}")
-                                
-                                # # Show what was found (brief summary)
-                                # if web_result['best_guess_label']:
-                                #     st.info(f"🎯 {web_result['best_guess_label']}")
-                                
-                                # if web_result['web_entities']:
-                                #     entities_preview = ", ".join([
-                                #         f"{e['description']} ({int(e['score']*100)}%)" 
-                                #         for e in web_result['web_entities'][:3]
-                                #     ])
-                                #     st.caption(f"📋 Wykryte: {entities_preview}")
-                                
-                                
-                            else:
-                                st.warning("⚠️ Nie udało się automatycznie wykryć kontekstu. Wpisz ręcznie poniżej.")
-                    
+                            st.warning("⚠️ Nie wykryto kontekstu. Wpisz ręcznie.")
+                            st.session_state.web_context_data = None  # ← NEW
                     except Exception as e:
                         st.error(f"❌ Błąd: {str(e)}")
+                        st.session_state.web_context_data = None  # ← NEW
             
             # Context text area (always visible, editable)
             user_context = st.text_area(
@@ -267,6 +272,25 @@ with tab1:
                         result = analyzer.analyze_image(image_data, user_context=stripped_context, safety_context=safety_results)
                         
                         st.success("✅ Analiza zakończona!")
+
+                        # ===== SAVE TO AZURE STORAGE (NEW) =====
+                        if storage_manager:
+                            try:
+                                analysis_id = storage_manager.save_analysis(
+                                    image_bytes=image_data,
+                                    image_name=uploaded_file.name,
+                                    result_json=result,
+                                    user_context=stripped_context,
+                                    web_context=st.session_state.web_context_data,  # ← NEW - include web detection
+                                    safety_results=safety_results
+                                )
+                                st.caption(f"💾 Zapisano: {analysis_id}")
+                            except Exception as e:
+                                st.warning(f"⚠️ Nie udało się zapisać do storage: {str(e)}")
+
+
+
+
                         
                         if stripped_context:
                             st.info(f"ℹ️ Użyto kontekstu: *{stripped_context[:100]}...*")
