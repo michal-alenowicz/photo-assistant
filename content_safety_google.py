@@ -1,5 +1,3 @@
-# content_safety_google.py - ENHANCED with all 5 categories + numeric conversion
-
 from google.cloud import vision
 from google.oauth2 import service_account
 from typing import Dict
@@ -13,7 +11,7 @@ class ContentSafetyChecker:
     Likelihood levels: UNKNOWN, VERY_UNLIKELY, UNLIKELY, POSSIBLE, LIKELY, VERY_LIKELY
     """
     
-    # Likelihood to numeric mapping (0-5 scale, similar to Azure's 0-6)
+    # Likelihood to numeric mapping (0-5 scale)
     LIKELIHOOD_MAP = {
         'UNKNOWN': 0,
         'VERY_UNLIKELY': 1,
@@ -23,7 +21,7 @@ class ContentSafetyChecker:
         'VERY_LIKELY': 5
     }
     
-    # Thresholds for journalism (permissive - news may contain disturbing content)
+    # Thresholds for journalism (news may contain disturbing content)
     THRESHOLDS = {
         'adult': 3,      # Alert on POSSIBLE or higher (level 3+)
         'medical': 4,    # Alert on LIKELY or higher (graphic medical)
@@ -80,7 +78,7 @@ class ContentSafetyChecker:
     
     def _parse_results(self, safe_search) -> Dict:
         """
-        Parse Google SafeSearch results with ALL 5 categories
+        Parse Google SafeSearch results with the chosen categories
         """
         results = {
             'is_safe': True,
@@ -94,7 +92,7 @@ class ContentSafetyChecker:
             }
         }
         
-        # All 5 categories
+        # Chosen categories
         categories = {
             'adult': safe_search.adult.name,
             'medical': safe_search.medical.name,

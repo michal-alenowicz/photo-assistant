@@ -8,13 +8,13 @@ import io
 from PIL import Image
 import config
 
-
+#Details for imege checks
 ALLOWED_FORMATS = {"JPEG", "JPG", "PNG", "GIF", "BMP", "WEBP", "ICO", "TIFF", "MPO"}
 MAX_FILE_MB = 20
 MIN_DIM = 50
 MAX_DIM = 16000
 
-
+#Streamlit layout
 st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
 
 col1, col2 = st.columns([6, 1])
@@ -24,10 +24,12 @@ with col1:
 
 with col2:
     st.write("")
-    banner = Image.open("donal.png")
+    banner = Image.open("donal.jpg")
     st.image(banner, width='stretch')
     st.caption('(przeciągnij mnie na pole upload)')
 
+
+#Initializing objects
 
 @st.cache_resource
 def init_image_analyzer():
@@ -74,6 +76,7 @@ web_detector = init_web_detector()
 # Create tabs
 tab1, tab2 = st.tabs(["🖼️ Analiza Zdjęć", "❓ FAQ"])
 
+#Initial streamlit session state values
 if "prev_filename" not in st.session_state:
         st.session_state.prev_filename = None
 if "context_input" not in st.session_state:
@@ -155,7 +158,7 @@ with tab1:
         with col2:
             st.subheader("Analiza")
             
-            # ========== SIMPLIFIED CONTEXT SECTION (COMBINED) ==========
+            # ========== CONTEXT SECTION (COMBINED AUTO AND MANUAL INPUT) ==========
             st.markdown("### ⚙️ Kontekst zdjęcia")
             
             st.markdown("""
@@ -184,19 +187,7 @@ with tab1:
                                 st.session_state.context_input = web_result['suggested_context']
                                 st.rerun()  # Refresh to show populated field
                                 st.success(f"✅ Wykryto: {web_result['suggested_context']}")
-                                
-                                # # Show what was found (brief summary)
-                                # if web_result['best_guess_label']:
-                                #     st.info(f"🎯 {web_result['best_guess_label']}")
-                                
-                                # if web_result['web_entities']:
-                                #     entities_preview = ", ".join([
-                                #         f"{e['description']} ({int(e['score']*100)}%)" 
-                                #         for e in web_result['web_entities'][:3]
-                                #     ])
-                                #     st.caption(f"📋 Wykryte: {entities_preview}")
-                                
-                                
+                                                             
                             else:
                                 st.warning("⚠️ Nie udało się automatycznie wykryć kontekstu. Wpisz ręcznie poniżej.")
                     
@@ -219,7 +210,7 @@ with tab1:
                 else:
                     st.caption(f"✓ {char_count}/200 znaków")
             
-            st.markdown("---")  # Visual separator
+            st.markdown("---") 
             
             # ========== ANALYZE BUTTON ==========
             
@@ -233,7 +224,7 @@ with tab1:
                         img_byte_arr.seek(0)
                         image_data = img_byte_arr.read()
                         
-                        # ===== STEP 1: CONTENT SAFETY CHECK (NEW) =====
+                        # ===== STEP 1: CONTENT SAFETY CHECK =====
                         safety_results = content_safety.analyze_image(image_data)
                         
                                                 
@@ -251,11 +242,7 @@ with tab1:
                                 "ℹ️ **Możesz kontynuować pomimo ostrzeżenia.** Materiały dziennikarskie mogą zawierać szokujące treści. "
                                 "System nie blokuje analizy - decyzja należy do Ciebie."
                             )
-                            
-                            # User can still proceed - just click analyze again
-                            # Or add explicit checkbox:
-                            # if not st.checkbox("Rozumiem, chcę kontynuować"):
-                            #     st.stop()
+                                                        
                         else:
                             # All clear
                             st.success("✅ Weryfikacja treści: Brak ostrzeżeń")
@@ -313,7 +300,7 @@ with tab2:
  
     st.subheader("Zadaj pytanie")
     
-    # Wrap in form to prevent rerun on focus loss
+    # Wrap in streamlit form
     with st.form(key="faq_form", clear_on_submit=False):
         user_question = st.text_input(
             "Twoje pytanie:",
@@ -328,12 +315,12 @@ with tab2:
             use_container_width=True
         )
     
-    # Search button
+    # Search
     if submit_button:
         if user_question.strip():
             with st.spinner("Szukam odpowiedzi..."):
                 try:
-                    result = faq_system.answer_question(user_question)
+                    result = faq_system.answer_question(user_question, 0.39) #relatively permissive similarity check settings based on trial and error
                     
                     # Display answer with appropriate styling based on confidence
                     st.markdown("### 💬 Odpowiedź:")
@@ -350,7 +337,7 @@ with tab2:
                         similarity_percent = result['top_similarity'] * 100
                         st.caption(f"🎯 Trafność dopasowania: {similarity_percent:.0f}%")
                     
-                    # Show matched FAQs
+                    # Show matched FAQs (only questions)
                     if result['matched_faqs']:
                         with st.expander("📚 Powiązane pytania z FAQ"):
                             for i, matched in enumerate(result['matched_faqs'], 1):

@@ -1,7 +1,7 @@
 from google.cloud import vision
 from google.oauth2 import service_account
 import openai
-from typing import Dict, Optional
+from typing import Dict
 import json
 import os
 import config
@@ -74,6 +74,7 @@ class ImageAnalyzer:
         
         return summary
     
+
     def _parse_vision_results(self, response) -> Dict:
         """
         Parse Google Vision API response into structured format
@@ -132,13 +133,13 @@ class ImageAnalyzer:
                 for landmark in response.landmark_annotations
             ]
         
-        # Generate main caption from labels (Google doesn't have built-in captions)
-        if summary.get("tags"):
-            top_labels = [tag["tag"] for tag in summary["tags"][:3]]
-            summary["main_caption"] = [{
-                "text": f"Image showing {', '.join(top_labels)}",
-                "confidence": summary["tags"][0]["confidence"]
-            }]
+        # # Generate main caption from labels (Google doesn't have built-in captions)
+        # if summary.get("tags"):
+        #     top_labels = [tag["tag"] for tag in summary["tags"][:3]]
+        #     summary["main_caption"] = [{
+        #         "text": f"Image showing {', '.join(top_labels)}",
+        #         "confidence": summary["tags"][0]["confidence"]
+        #     }]
         
         
         return summary
@@ -149,7 +150,7 @@ class ImageAnalyzer:
         """
         prompt = (
             "Wygeneruj opis krótki zdjęcia oraz listę tagów (5-8 tagów). Opis zdjęcia powinien być utrzymany w dziennikarskim stylu i nadawać się do publikacji (1-2 zdania). Opis będzie opublikowany razem ze zdjęciem, nie może być suchym opisem widoku.\n" 
-            "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań w rodzaju: 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...', 'zdjęcie zwraca uwagę na', 'ujęcie oddaje', 'fotografia przywołuje', 'widok przypomina' i wszystkich równoważnych. Opis będzie opublikowany pod zdjęciem (obrazem), a więc unikaj słów typu 'zdjęcie', 'obraz', 'rysuek', 'scena'.\n"
+            "Nie opisuj oczywistych elementów widocznych na zdjęciu (kolorów, kształtów, wzajemnego położenia elementów), nie opisuj atmosfery zdjęcia; unikaj sformułowań w rodzaju: 'scena oddaje...', 'na zdjęciu widać...', 'zdjęcie przedstawia...', 'zdjęcie zwraca uwagę na', 'ujęcie oddaje', 'fotografia przywołuje', 'widok przypomina' i wszystkich równoważnych. Opis będzie opublikowany pod zdjęciem (obrazem), a więc unikaj słów typu 'zdjęcie', 'obraz', 'rysunek', 'scena'.\n"
             "W przypadku zdjęć symbolicznych/ilustracyjnych nie pisz jednoznacznie, że 'obiekt X symbolizuje pojęcie Y', 'osoba X wykonuje czynność Z, przywołując pojęcie Y' czy 'X to symbol Y'. Odwołaj się od razu do abstrakcyjnego pojęcia Y, omijając opis obiektu X oraz opis treści zdjęcia.\n"
             "Nie opisuj wyglądu (włosów, twarzy, ubioru) ludzi. Nie opisuj gestów i czynności wykonywanych przez ludzi; nie pisz wprost, co te gesty wyrażają. Odwołuj się od razu w sposób ogólny do wyrażanych przez nie abstrakcyjnych pojęć, emocji oraz powiązanej problematyki.\n"
             "Odwołaj się do kontekstu i ogólnej wiedzy o widocznym zjawisku, możesz przywołać ogólne prawdy i znane fakty związane z tematem, powiązaną problematykę, problemy społeczne, również historyczne fakty z życia widocznych osób, narodów czy grup społecznych.\n"
@@ -159,8 +160,7 @@ class ImageAnalyzer:
             "Poniżej analiza zdjęcia (wyniki z Google Cloud Vision):\n\n"
         )
         
-        #cleaned_summary = vision_summary
-        
+                
         prompt += f"\n\n{'='*60}\n"
         prompt += f"Vision JSON: {vision_summary}."
         

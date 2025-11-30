@@ -1,8 +1,6 @@
-#OpenAI version (instead of Azure OpenAI)
-
 import openai
 import numpy as np
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple
 import json
 import pickle
 import hashlib
@@ -19,7 +17,7 @@ class FAQSystem:
         faq_file_path: str
     ):
         """
-        Initialize FAQ System with OpenAI (standard API)
+        Initialize FAQ System with OpenAI API
         
         """
         # Initialize OpenAI client
@@ -33,7 +31,7 @@ class FAQSystem:
         self.embeddings_cache_file = "faq_embeddings_cache.pkl"
         
         # Detect if using GPT-5 family
-        self.is_gpt5 = chat_model.startswith("gpt-5.1")
+        self.is_gpt5 = chat_model.startswith("gpt-5")
 
 
         # Load FAQ data
@@ -51,6 +49,7 @@ class FAQSystem:
             self._save_embeddings_cache(current_hash)
             print(f"💾 Saved embeddings to cache")
     
+
     def load_faq(self, file_path: str):
         """Load FAQ data from JSON file"""
         try:
@@ -65,11 +64,13 @@ class FAQSystem:
         except KeyError:
             raise Exception("FAQ file must contain 'faqs' key")
     
+
     def _get_file_hash(self, file_path: str) -> str:
         """Calculate MD5 hash of FAQ file"""
         with open(file_path, 'rb') as f:
             return hashlib.md5(f.read()).hexdigest()
     
+
     def _load_cached_embeddings(self, current_hash: str) -> bool:
         """Load embeddings from cache if valid"""
         if not os.path.exists(self.embeddings_cache_file):
@@ -94,6 +95,7 @@ class FAQSystem:
             print(f"⚠️ Cache load error: {e}, regenerating...")
             return False
     
+
     def _save_embeddings_cache(self, file_hash: str):
         """Save embeddings with metadata"""
         cache = {
@@ -107,9 +109,9 @@ class FAQSystem:
         try:
             with open(self.embeddings_cache_file, 'wb') as f:
                 pickle.dump(cache, f)
-            print(f"💾 Saved embeddings cache")
+            print(f"Saved embeddings cache")
         except Exception as e:
-            print(f"⚠️ Failed to save cache: {e}")
+            print(f"Failed to save cache: {e}")
     
     def get_embedding(self, text: str) -> List[float]:
         """Generate embedding using OpenAI"""
@@ -120,9 +122,10 @@ class FAQSystem:
             )
             return response.data[0].embedding
         except Exception as e:
-            print(f"❌ Error generating embedding: {e}")
+            print(f"Error generating embedding: {e}")
             return []
     
+
     def generate_all_embeddings(self):
         """Generate embeddings for all FAQ questions"""
         print("🔄 Generating embeddings...")
@@ -133,13 +136,14 @@ class FAQSystem:
             
             if embedding:
                 self.embeddings.append(embedding)
-                print(f"  ✓ Generated {i}/{len(self.faq_data)}")
+                print(f"Generated {i}/{len(self.faq_data)}")
             else:
                 self.embeddings.append([])
-                print(f"  ✗ Failed {i}/{len(self.faq_data)}")
+                print(f"Failed {i}/{len(self.faq_data)}")
         
         print(f"✅ Generated {len(self.embeddings)} embeddings")
     
+
     def cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
         """Calculate cosine similarity"""
         if not vec1 or not vec2:
@@ -156,7 +160,8 @@ class FAQSystem:
             return 0.0
         
         return dot_product / (norm1 * norm2)
-    
+
+
     def find_similar_faqs(self, question: str, top_k: int = 3) -> List[Tuple[Dict, float]]:
         """Find most similar FAQs"""
         question_embedding = self.get_embedding(question)
@@ -173,7 +178,8 @@ class FAQSystem:
         similarities.sort(key=lambda x: x[1], reverse=True)
         return similarities[:top_k]
     
-    def answer_question(self, question: str, similarity_threshold: float = 0.3) -> Dict:
+
+    def answer_question(self, question: str, similarity_threshold: float = 0.35) -> Dict:
         """Answer user question using FAQ + OpenAI"""
         similar_faqs = self.find_similar_faqs(question, top_k=3)
         

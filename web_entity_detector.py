@@ -1,12 +1,10 @@
-# web_entity_detector.py - Detect web entities and context from images
-
 from google.cloud import vision
 from google.oauth2 import service_account
-from typing import Dict, List, Optional
+from typing import Dict
 import os
 
 
-class WebEntityDetector:
+class WebEntityDetector:    
     """
     Detect web entities, best guess labels, and matching pages
     Uses Google Cloud Vision Web Detection API
@@ -15,13 +13,12 @@ class WebEntityDetector:
     def __init__(self, google_credentials_path: str):
         """Initialize Web Entity Detector with Google credentials"""
         
-        # Initialize Google Cloud Vision client (same as ImageAnalyzer)
+        # Initialize Google Cloud Vision client
         if os.path.exists(google_credentials_path):
             credentials = service_account.Credentials.from_service_account_file(
                 google_credentials_path
             )
             self.vision_client = vision.ImageAnnotatorClient(credentials=credentials)
-            print("✅ Web Entity Detector initialized from file")
         else:
             try:
                 import streamlit as st
@@ -88,11 +85,11 @@ class WebEntityDetector:
             # Usually only one, but take the first
             result['best_guess_label'] = annotations.best_guess_labels[0].label
         
-        # Web entities (people, places, things detected)
+        # Web entities
         if annotations.web_entities:
             for entity in annotations.web_entities:
                 # Only include entities with description and reasonable score
-                if entity.description and entity.score > 0.5:
+                if entity.description and entity.score > 0.7:
                     result['web_entities'].append({
                         'description': entity.description,
                         'score': entity.score,
@@ -102,7 +99,7 @@ class WebEntityDetector:
             # Sort by score (highest first)
             result['web_entities'].sort(key=lambda x: x['score'], reverse=True)
         
-        # Pages with matching images
+        # Pages with matching images (optional - can be useful for verification later. Omitted in suggested context)
         if annotations.pages_with_matching_images:
             for page in annotations.pages_with_matching_images[:5]:  # Limit to top 5
                 page_info = {
@@ -113,7 +110,7 @@ class WebEntityDetector:
                 }
                 result['matching_pages'].append(page_info)
         
-        # Visually similar images (optional - can be useful for verification)
+        # Visually similar images (optional - can be useful for verification later)
         if annotations.visually_similar_images:
             for img in annotations.visually_similar_images[:3]:  # Limit to top 3
                 result['visually_similar_images'].append({
@@ -125,7 +122,7 @@ class WebEntityDetector:
     def _generate_context_suggestion(self, detection_result: Dict) -> str:
         """
         Generate suggested context string from web detection results
-        This can be used to auto-populate the context field
+        Used to auto-populate the context field
         """
         context_parts = []
         
@@ -133,15 +130,15 @@ class WebEntityDetector:
         if detection_result['best_guess_label']:
             context_parts.append(detection_result['best_guess_label'])
         
-        # # Add top web entities (max 5, score > 0.7 for higher confidence)
-        # high_confidence_entities = [
-        #     entity['description'] 
-        #     for entity in detection_result['web_entities'][:3]
-        #     if entity['score'] > 0.95
-        # ]
+        # Add top web entities (score >= 0.99 for highest confidence)
+        high_confidence_entities = [
+            entity['description'] 
+            for entity in detection_result['web_entities'][:4]
+            if entity['score'] >= 0.99
+        ]
         
-        # if high_confidence_entities:
-        #     context_parts.extend(high_confidence_entities)
+        if high_confidence_entities:
+            context_parts.extend(high_confidence_entities)
         
         # Join with commas
         return ', '.join(context_parts) if context_parts else ''
