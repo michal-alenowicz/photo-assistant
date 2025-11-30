@@ -29,7 +29,7 @@ AZURE_OPENAI_API_VERSION = get_secret("AZURE_OPENAI_API_VERSION", "2025-01-01-pr
 AZURE_OPENAI_EMBEDDINGS_API_VERSION = get_secret("AZURE_OPENAI_EMBEDDINGS_API_VERSION", "2023-05-15")
 
 # Azure OpenAI Deployments
-CHAT_DEPLOYMENT = get_secret("CHAT_DEPLOYMENT", "gpt-5-chat")  
+CHAT_DEPLOYMENT = get_secret("CHAT_DEPLOYMENT", "gpt-4.1-chat")  
 EMBEDDING_DEPLOYMENT = get_secret("EMBEDDING_DEPLOYMENT", "text-embedding-3-small")
 
 #Azure Content Safety

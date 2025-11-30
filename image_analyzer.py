@@ -252,6 +252,8 @@ nazwiska osób, daty, nazwy miejsc lub wydarzeń, uwzględnij je w opisie i taga
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                # reasoning_effort='none',
+                # verbosity='low'
                 max_tokens=350,
                 temperature=0.2,
             )
