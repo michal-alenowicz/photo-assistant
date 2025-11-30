@@ -320,7 +320,7 @@ with tab2:
         if user_question.strip():
             with st.spinner("Szukam odpowiedzi..."):
                 try:
-                    result = faq_system.answer_question(user_question, 0.39) #relatively permissive similarity check settings based on trial and error
+                    result = faq_system.answer_question(user_question, 0.45) #relatively permissive similarity check settings based on trial and error
                     
                     # Display answer with appropriate styling based on confidence
                     st.markdown("### 💬 Odpowiedź:")
