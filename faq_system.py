@@ -179,13 +179,14 @@ class FAQSystem:
         return similarities[:top_k]
     
 
-    def answer_question(self, question: str, similarity_threshold: float = 0.35) -> Dict:
+    def answer_question(self, question: str, similarity_threshold: float = 0.5) -> Dict:
         """Answer user question using FAQ + OpenAI"""
         similar_faqs = self.find_similar_faqs(question, top_k=3)
         
         if not similar_faqs or similar_faqs[0][1] < similarity_threshold:
+            answer = self._generate_general_answer(question)
             return {
-                "answer": "Przepraszam, nie znalazłem odpowiedzi na to pytanie w bazie FAQ.",
+                "answer": f"Przepraszam, nie znalazłem odpowiedzi na to pytanie w bazie FAQ. Ogólna odpowiedź: \n\n{answer}",
                 "matched_faqs": [],
                 "confidence": "low",
                 "top_similarity": 0.0
@@ -269,7 +270,61 @@ Odpowiedz na pytanie w naturalny sposób (2-4 zdania) na podstawie informacji z 
         
         except Exception as e:
             return f"Przepraszam, wystąpił błąd: {str(e)}"
-    
+
+
+    def _generate_general_answer(self, question: str) -> str:
+        """
+        Generate answer using general knowledge (no FAQ context)
+        """
+        prompt = f"""Pytanie: {question}
+
+Odpowiedz zwięźle (2-4 zdania) na podstawie ogólnej wiedzy.
+UWAGA: Pytanie użytkownika nie zostało skojarzone z żadną ze specyficznych informacji (FAQ) o tej aplikacji - odpowiadasz na podstawie ogólnej wiedzy."""
+        
+        try:
+            # GPT-5 compatible parameters
+            if self.is_gpt5:
+                response = self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Jesteś pomocnym asystentem FAQ. Odpowiadasz zwięźle i profesjonalnie."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    reasoning_effort="none",
+                    verbosity='low' 
+                )
+            else:
+                # GPT-4 and earlier
+                response = self.client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "Jesteś pomocnym asystentem FAQ. Odpowiadasz zwięźle i profesjonalnie."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=0.7,
+                    max_tokens=300
+                )
+            
+            return response.choices[0].message.content.strip()
+        
+        except Exception as e:
+            return f"Przepraszam, wystąpił błąd: {str(e)}"
+
+
+
+
     def get_faq_count(self) -> int:
         """Get total FAQ count"""
         return len(self.faq_data)
