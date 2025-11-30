@@ -1,4 +1,3 @@
-# (AZURE OPENAI VERSION)
 from openai import AzureOpenAI
 import numpy as np
 from typing import List, Dict, Tuple, Optional
@@ -197,7 +196,7 @@ class FAQSystem:
         # Return top K
         return similarities[:top_k]
     
-    def answer_question(self, question: str, similarity_threshold: float = 0.3) -> Dict:
+    def answer_question(self, question: str, similarity_threshold: float = 0.5) -> Dict:
         """
         Answer user question using FAQ system + LLM
         """
@@ -206,8 +205,9 @@ class FAQSystem:
         
         # Check if we have good matches
         if not similar_faqs or similar_faqs[0][1] < similarity_threshold:
+            answer = self._generate_general_answer(question)
             return {
-                "answer": "Przepraszam, nie znalazłem odpowiedzi na to pytanie w bazie FAQ. Czy możesz je sformułować inaczej lub zadać bardziej szczegółowe pytanie?",
+                "answer": f"Przepraszam, nie znalazłem odpowiedzi na to pytanie w bazie FAQ. Ogólna odpowiedź: \n\n{answer}",
                 "matched_faqs": [],
                 "confidence": "low",
                 "top_similarity": 0.0
@@ -263,14 +263,11 @@ Jeśli żadna z informacji nie jest związana z pytaniem, powiedz o tym szczerze
         
         try:
             response = self.chat_client.chat.completions.create(
-                model=self.chat_deployment,  # Your deployment name (e.g., "gpt-4", "gpt-4-turbo")
+                model=self.chat_deployment,
                 messages=[
                     {
                         "role": "system",
-                        "content": """Jesteś pomocnym asystentem FAQ dla systemu analizy 
-                        zdjęć prasowych. Odpowiadasz na pytania użytkowników w sposób przyjazny, 
-                        profesjonalny i zwięzły. Używasz informacji z bazy FAQ, ale 
-                        formułujesz odpowiedzi w naturalny sposób."""
+                        "content": """Jesteś pomocnym asystentem FAQ. Odpowiadasz zwięźle i profesjonalnie."""
                     },
                     {
                         "role": "user",
@@ -286,31 +283,39 @@ Jeśli żadna z informacji nie jest związana z pytaniem, powiedz o tym szczerze
         except Exception as e:
             return f"Przepraszam, wystąpił błąd podczas generowania odpowiedzi: {str(e)}"
     
-    def get_all_faqs(self) -> List[Dict]:
-        """Get all FAQ entries"""
-        return self.faq_data
+    def _generate_general_answer(self, question: str) -> str:
+        """
+        Generate answer using general knowledge (no FAQ context)
+        """
+        prompt = f"""Pytanie: {question}
+
+Odpowiedz zwięźle (2-4 zdania) na podstawie ogólnej wiedzy.
+UWAGA: Pytanie użytkownika nie zostało skojarzone z żadną ze specyficznych informacji (FAQ) o tej aplikacji - odpowiadasz na podstawie ogólnej wiedzy."""
+        
+        try:
+            response = self.chat_client.chat.completions.create(
+                model=self.chat_deployment,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Jesteś pomocnym asystentem FAQ. Odpowiadasz zwięźle i profesjonalnie."""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=300
+            )
+            
+            return response.choices[0].message.content.strip()
+        
+        except Exception as e:
+            return f"Przepraszam, wystąpił błąd podczas generowania odpowiedzi: {str(e)}"
     
-    def get_faq_by_id(self, faq_id: int) -> Optional[Dict]:
-        """Get specific FAQ by ID"""
-        for faq in self.faq_data:
-            if faq.get('id') == faq_id:
-                return faq
-        return None
     
     def get_faq_count(self) -> int:
         """Get total number of FAQs"""
         return len(self.faq_data)
     
-    # def search_faqs_by_keyword(self, keyword: str) -> List[Dict]:
-    #     """
-    #     Simple keyword search in questions and answers
-    #     """
-    #     keyword_lower = keyword.lower()
-    #     results = []
-        
-    #     for faq in self.faq_data:
-    #         if (keyword_lower in faq['question'].lower() or 
-    #             keyword_lower in faq['answer'].lower()):
-    #             results.append(faq)
-        
-    #     return results

@@ -283,7 +283,7 @@ with tab2:
         if user_question.strip():
             with st.spinner("Szukam odpowiedzi..."):
                 try:
-                    result = faq_system.answer_question(user_question)
+                    result = faq_system.answer_question(user_question, 0.45)  #Relatively permissive threshold based on trial and error
                     
                     # Display answer with appropriate styling based on confidence
                     st.markdown("### 💬 Odpowiedź:")
