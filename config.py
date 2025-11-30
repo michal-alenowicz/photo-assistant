@@ -8,24 +8,19 @@ def get_secret(key: str, default: str = "") -> str:
     """
     Get secret from Streamlit secrets (cloud) or environment variables (local)
     """
-    # # Try Streamlit secrets first (for Streamlit Cloud)
-    # if hasattr(st, 'secrets') and key in st.secrets:
-    #     return st.secrets[key]
-    # # Fallback to environment variables
-    return os.getenv(key, default)
+    # Try Streamlit secrets first (for Streamlit Cloud)
+    try:
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    # Fallback to environment variables
+    except:
+        return os.getenv(key, default)
 
-# Azure Vision
-AZURE_VISION_ENDPOINT = get_secret("AZURE_VISION_ENDPOINT")
-AZURE_VISION_KEY = get_secret("AZURE_VISION_KEY")
+GOOGLE_APPLICATION_CREDENTIALS = "google-credentials.json"
+GOOGLE_PROJECT_ID = get_secret("GOOGLE_PROJECT_ID")
 
-# Azure OpenAI
-AZURE_OPENAI_ENDPOINT = get_secret("AZURE_OPENAI_ENDPOINT")
-AZURE_OPENAI_API_KEY = get_secret("AZURE_OPENAI_API_KEY")
+OPENAI_API_KEY = get_secret("OPENAI_API_KEY")
 
-# Azure OpenAI API Versions
-AZURE_OPENAI_API_VERSION = get_secret("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
-AZURE_OPENAI_EMBEDDINGS_API_VERSION = get_secret("AZURE_OPENAI_EMBEDDINGS_API_VERSION", "2023-05-15")
+OPENAI_MODEL = "gpt-4.1"
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 
-# Azure OpenAI Deployments
-CHAT_DEPLOYMENT = get_secret("CHAT_DEPLOYMENT", "gpt-5-chat")  
-EMBEDDING_DEPLOYMENT = get_secret("EMBEDDING_DEPLOYMENT", "text-embedding-3-small") 

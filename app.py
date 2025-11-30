@@ -1,44 +1,82 @@
 import streamlit as st
-from vision import analyze_image
-from llm import generate_caption_and_tags
+from image_analyzer import ImageAnalyzer
 from faq_system import FAQSystem
+from content_safety_google import ContentSafetyChecker
+from web_entity_detector import WebEntityDetector
 import json
 import io
 from PIL import Image
 import config
 
-
+#Details for imege checks
 ALLOWED_FORMATS = {"JPEG", "JPG", "PNG", "GIF", "BMP", "WEBP", "ICO", "TIFF", "MPO"}
 MAX_FILE_MB = 20
 MIN_DIM = 50
 MAX_DIM = 16000
 
-
+#Streamlit layout
 st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
-st.title("Asystent opisywania i tagowania zdjęć (Polski)")
 
+col1, col2 = st.columns([6, 1])
+with col1:
+    st.title("Donal POC - Asystent opisywania i tagowania zdjęć")
+    st.caption("wersja Google Cloud + OpenAI API")
+
+with col2:
+    st.write("")
+    banner = Image.open("donal.jpg")
+    st.image(banner, width='stretch')
+    st.caption('(przeciągnij mnie na pole upload)')
+
+
+#Initializing objects
+
+@st.cache_resource
+def init_image_analyzer():
+    """Initialize Image Analyzer with Google + OpenAI credentials"""
+    return ImageAnalyzer(
+        google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS,
+        google_project_id=config.GOOGLE_PROJECT_ID,
+        openai_api_key=config.OPENAI_API_KEY,
+        openai_model=config.OPENAI_MODEL
+    )
 
 
 @st.cache_resource
 def init_faq_system():
-    """Initialize FAQ System with Azure OpenAI"""
+    """Initialize FAQ System with OpenAI"""
     return FAQSystem(
-        azure_openai_key=config.AZURE_OPENAI_API_KEY,
-        azure_openai_endpoint=config.AZURE_OPENAI_ENDPOINT,
-        chat_deployment=config.CHAT_DEPLOYMENT,
-        embedding_deployment=config.EMBEDDING_DEPLOYMENT,
-        faq_file_path="faq_data.json",
-        api_version=config.AZURE_OPENAI_API_VERSION,
-        embedding_api_version=config.AZURE_OPENAI_EMBEDDINGS_API_VERSION
+        openai_api_key=config.OPENAI_API_KEY,
+        chat_model=config.OPENAI_MODEL,
+        embedding_model=config.OPENAI_EMBEDDING_MODEL,
+        faq_file_path="faq_data.json"
     )
 
 
+@st.cache_resource
+def init_content_safety():
+    """Initialize Content Safety with Google SafeSearch"""
+    return ContentSafetyChecker(
+        google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS
+    )
+
+@st.cache_resource
+def init_web_detector():
+    """Initialize Web Entity Detector""" 
+    return WebEntityDetector(
+        google_credentials_path=config.GOOGLE_APPLICATION_CREDENTIALS
+    )
+
+analyzer = init_image_analyzer()
 faq_system = init_faq_system()
+content_safety = init_content_safety()
+web_detector = init_web_detector()
 
 
 # Create tabs
 tab1, tab2 = st.tabs(["🖼️ Analiza Zdjęć", "❓ FAQ"])
 
+#Initial streamlit session state values
 if "prev_filename" not in st.session_state:
         st.session_state.prev_filename = None
 if "context_input" not in st.session_state:
@@ -47,11 +85,8 @@ if "context_input" not in st.session_state:
 # ==================== TAB 1: IMAGE ANALYSIS ====================
 
 with tab1:
-
     st.empty()
     st.header("Prześlij zdjęcie do analizy")
-
-
     
     # File uploader
     uploaded_file = st.file_uploader(
@@ -59,20 +94,16 @@ with tab1:
         type=["jpg", "jpeg", "png", "gif", "bmp", "webp", "ico", "tiff", "mpo"]
     )
     
-    
     # Reset flag when user uploads their own
     if uploaded_file is not None and not isinstance(uploaded_file, io.BufferedReader):
         st.session_state.sample_preloaded = False
-
-
-
+    
     if uploaded_file is not None:
         if uploaded_file.name != st.session_state.prev_filename:
             # New image detected - wipe context
             st.session_state.context_input = ""
             st.session_state.prev_filename = uploaded_file.name
-
-
+    
     if uploaded_file is not None:
         # Create two columns
         col1, col2 = st.columns([1, 1])
@@ -82,44 +113,41 @@ with tab1:
             # Display image
             image = Image.open(uploaded_file)
             st.image(image, width='stretch')
-
-            # ---- 1) File size check ----
+            
+            # ---- File validations ----
             file_size_mb = uploaded_file.size / (1024 * 1024)
-
+            
             if file_size_mb > MAX_FILE_MB:
                 st.error(f"❌ Plik zbyt duży ({file_size_mb:.1f} MB). Dopuszczalne max.: {MAX_FILE_MB} MB.")
                 st.stop()
-
-            # ---- 2) File format check ----
+            
             try:
                 img = Image.open(uploaded_file)
                 fmt = img.format.upper()
-
+                
                 if fmt not in ALLOWED_FORMATS:
                     st.error(f"❌ Niedozwolony format: {fmt}")
                     st.stop()
-
+            
             except Exception as e:
                 st.error("❌ Błąd odczytu obrazu: " + str(e))
                 st.stop()
-
-            # ---- 3) Resolution check ----
+            
             width, height = img.size
-
+            
             if width < MIN_DIM or height < MIN_DIM:
                 st.error(f"❌ Obraz zbyt mały: {width}×{height}px. Minimum to {MIN_DIM}×{MIN_DIM}.")
                 st.stop()
-
+            
             if width > MAX_DIM or height > MAX_DIM:
                 st.error(f"❌ Obraz zbyt duży: {width}×{height}px. Maksimum to {MAX_DIM}×{MAX_DIM}.")
                 st.stop()
             
-
-            # SUCKCES - Image info
+            # SUCCESS - Image info
             st.caption(f"Nazwa pliku: {uploaded_file.name}")
             st.caption(f"Rozmiar: {uploaded_file.size / 1024:.1f} KB")
             st.caption(f"Wymiary: {image.size[0]} x {image.size[1]} px")
-
+            
             if image.size[0] < 150 or image.size[1] < 150:
                 st.warning(
                     f"⚠️ Uwaga: Obraz jest bardzo mały!\n\n"
@@ -130,65 +158,113 @@ with tab1:
         with col2:
             st.subheader("Analiza")
             
-            # ========== OPTIONAL CONTEXT FIELD (COLLAPSIBLE) ==========
-            with st.expander("⚙️ Dodatkowy kontekst (opcjonalnie)", expanded=False):
-                st.markdown("""
-                Podaj hasłowo dodatkowe informacje, które pomogą w lepszym opisie zdjęcia:
-                - **Osoby**: Nazwiska znanych osób, polityków
-                - **Miejsca**: Nazwy lokalizacji, miast
-                - **Wydarzenia**: Nazwa wydarzenia, okoliczności
-                """)
-                
-                user_context = st.text_area(
-                    "Kontekst:",
-                    value=st.session_state.context_input,
-                    placeholder="Np. 'Donald Trump, Waszyngton, konferencja prasowa'",
-                    height=100,
-                    help="Ten kontekst zostanie przekazany do AI, aby wygenerować bardziej precyzyjny opis",
-                    key="context_input"
-                )
-                
-                # Show character count
-                if user_context:
-                    st.caption(f"Znaki: {len(user_context)}/200")
-                    if len(user_context) > 200:
-                        st.warning("⚠️ Kontekst jest zbyt długi. Zalecamy maksymalnie 200 znaków.")
+            # ========== CONTEXT SECTION (COMBINED AUTO AND MANUAL INPUT) ==========
+            st.markdown("### ⚙️ Kontekst zdjęcia")
             
-
-            # Analyze button
-            if st.button("🔍 Analizuj", type="primary"):
-                with st.spinner("Analizuję zdjęcie..."):
+            st.markdown("""
+            **Automatyczne wykrywanie:** web search rozpozna osoby, miejsca i wydarzenia  
+            **Lub edytuj ręcznie:** Dodaj nazwiska, lokalizacje, okoliczności
+            """)
+            
+            # Detect context button at the top
+            if st.button("🌐 Wykryj kontekst [zalecane!]", use_container_width=True, type="secondary"):
+                with st.spinner("Wyszukiwanie w sieci..."):
                     try:
                         # Convert image to bytes
-                        # img_bytes = uploaded_file.read()
                         img_byte_arr = io.BytesIO()
                         image.save(img_byte_arr, format=image.format or 'JPEG')
                         img_byte_arr.seek(0)
                         image_data = img_byte_arr.read()
                         
-
-                        # Get user context (empty string if None or whitespace)
-                        stripped_context = user_context.strip() if 'user_context' in locals() and user_context else ""
-
-                        # Analyze
-                        vision = analyze_image(image_data)
-                        res = generate_caption_and_tags(vision, user_context=stripped_context)
+                        # Detect web entities
+                        web_result = web_detector.detect_web_context(image_data)
                         
-                        # Display results
+                        if web_result.get('error'):
+                            st.error(f"❌ Błąd wykrywania: {web_result['error']}")
+                        else:
+                            # Auto-populate context field
+                            if web_result['suggested_context']:
+                                st.session_state.context_input = web_result['suggested_context']
+                                st.rerun()  # Refresh to show populated field
+                                st.success(f"✅ Wykryto: {web_result['suggested_context']}")
+                                                             
+                            else:
+                                st.warning("⚠️ Nie udało się automatycznie wykryć kontekstu. Wpisz ręcznie poniżej.")
+                    
+                    except Exception as e:
+                        st.error(f"❌ Błąd: {str(e)}")
+            
+            # Context text area (always visible, editable)
+            user_context = st.text_area(
+                "Kontekst (edytowalny) - w dowolnym języku:",
+                placeholder="Kliknij 'Wykryj kontekst' lub wpisz ręcznie",
+                height=100,
+                help="Automatycznie wykryty kontekst lub wpisany ręcznie. Możesz edytować.",
+                key="context_input"
+            )
+            
+            if user_context:
+                char_count = len(user_context)
+                if char_count > 200:
+                    st.warning(f"⚠️ Kontekst zbyt długi ({char_count}/200 znaków). Skróć dla lepszych wyników.")
+                else:
+                    st.caption(f"✓ {char_count}/200 znaków")
+            
+            st.markdown("---") 
+            
+            # ========== ANALYZE BUTTON ==========
+            
+            # Analyze button
+            if st.button("🔍 Analizuj", type="primary"):
+                with st.spinner("Analizuję zdjęcie..."):
+                    try:
+                        # Convert image to bytes
+                        img_byte_arr = io.BytesIO()
+                        image.save(img_byte_arr, format=image.format or 'JPEG')
+                        img_byte_arr.seek(0)
+                        image_data = img_byte_arr.read()
+                        
+                        # ===== STEP 1: CONTENT SAFETY CHECK =====
+                        safety_results = content_safety.analyze_image(image_data)
+                        
+                                                
+                        # Show alert if content flagged (but don't block)
+                        if not safety_results['is_safe']:
+                            alert_msg = content_safety.get_alert_message(safety_results)
+                            st.warning(alert_msg)
+                            
+                            # Show detailed breakdown in expander
+                            with st.expander("🔍 Szczegóły moderacji treści"):
+                                st.markdown(content_safety.get_all_details(safety_results))
+                            
+                            # Tell user they can continue
+                            st.info(
+                                "ℹ️ **Możesz kontynuować pomimo ostrzeżenia.** Materiały dziennikarskie mogą zawierać szokujące treści. "
+                                "System nie blokuje analizy - decyzja należy do Ciebie."
+                            )
+                                                        
+                        else:
+                            # All clear
+                            st.success("✅ Weryfikacja treści: Brak ostrzeżeń")
+                        
+
+                        # ===== STEP 2: REGULAR ANALYSIS (continues regardless) =====
+                        stripped_context = user_context.strip() if user_context else ""
+                        
+                        result = analyzer.analyze_image(image_data, user_context=stripped_context, safety_context=safety_results)
+                        
                         st.success("✅ Analiza zakończona!")
                         
-                        # Show if context was used
                         if stripped_context:
-                            st.info(f"ℹ️ Użyto dodatkowego kontekstu: *{stripped_context[:100]}{'...' if len(stripped_context) > 100 else ''}*")
+                            st.info(f"ℹ️ Użyto kontekstu: *{stripped_context[:100]}...*")
                         
-
                         # Caption
                         st.markdown("### 📝 Opis zdjęcia")
-                        st.write(res.get("caption") or res.get("raw"))
+                        st.write(result.get("caption") or result.get("raw"))
                         
                         # Tags
                         st.markdown("### 🏷️ Tagi")
-                        tags = res.get("tags", [])
+                        tags = result.get("tags", [])
                         if tags:
                             tags_html = " ".join([
                                 f'<span style="background-color: #e3f2fd; padding: 5px 10px; '
@@ -197,16 +273,19 @@ with tab1:
                             ])
                             st.markdown(tags_html, unsafe_allow_html=True)
                         
-                        # Show results as json
-                        with st.expander("🔍 Opis i tagi w json"):
-                            st.json(res)
-
-                        # Show detailed insights in expander
+                        # Results JSON
+                        with st.expander("📄 Opis i tagi w JSON"):
+                            st.json({
+                                "caption": result.get("caption"),
+                                "tags": result.get("tags")
+                            })
+                        
+                        # Vision analysis debug
                         with st.expander("🔍 Pośrednia analiza CV (debug)"):
-                            st.json(vision)
+                            st.json(result.get("vision_summary", {}))
                     
                     except Exception as e:
-                        st.error(f"❌ Błąd podczas analizy: {str(e)}")
+                        st.error(f"❌ Błąd: {str(e)}")
 
 
 # ==================== TAB 2: FAQs ====================
@@ -221,7 +300,7 @@ with tab2:
  
     st.subheader("Zadaj pytanie")
     
-    # Wrap in form to prevent rerun on focus loss
+    # Wrap in streamlit form
     with st.form(key="faq_form", clear_on_submit=False):
         user_question = st.text_input(
             "Twoje pytanie:",
@@ -236,12 +315,12 @@ with tab2:
             use_container_width=True
         )
     
-    # Search button
+    # Search
     if submit_button:
         if user_question.strip():
             with st.spinner("Szukam odpowiedzi..."):
                 try:
-                    result = faq_system.answer_question(user_question)
+                    result = faq_system.answer_question(user_question, 0.39) #relatively permissive similarity check settings based on trial and error
                     
                     # Display answer with appropriate styling based on confidence
                     st.markdown("### 💬 Odpowiedź:")
@@ -258,7 +337,7 @@ with tab2:
                         similarity_percent = result['top_similarity'] * 100
                         st.caption(f"🎯 Trafność dopasowania: {similarity_percent:.0f}%")
                     
-                    # Show matched FAQs
+                    # Show matched FAQs (only questions)
                     if result['matched_faqs']:
                         with st.expander("📚 Powiązane pytania z FAQ"):
                             for i, matched in enumerate(result['matched_faqs'], 1):

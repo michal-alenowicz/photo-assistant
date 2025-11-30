@@ -3,6 +3,13 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Google Cloud credentials
+google-credentials.json
+*-credentials.json
+*.json
+!faq_data.json  #Exception: keep FAQ data
+!package.json   #Exception: if theres package.json
+
 # C extensions
 *.so
 

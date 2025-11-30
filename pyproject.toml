@@ -5,14 +5,10 @@ description = "Assistant app for generating image tags and captions. Will also a
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "azure-ai-vision-imageanalysis>=1.0.0",
-    "azure-cognitiveservices-vision-computervision>=0.9.1",
-    "azure-core>=1.36.0",
-    "faiss-cpu>=1.13.0",
-    "image>=1.5.33",
-    "msrest>=0.7.1",
+    "deptry>=0.24.0",
+    "google-cloud-vision>=3.11.0",
     "openai>=2.8.1",
+    "pillow>=12.0.0",
     "python-dotenv>=1.2.1",
-    "requests>=2.32.5",
     "streamlit>=1.51.0",
 ]
