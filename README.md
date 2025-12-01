@@ -52,7 +52,7 @@ app | Azure-based (with dense captions) | GCP-based without Web Detection | GCP-
 Context | none | none | 'big hitler' (?) |
 LLM output caption | "Żołnierz w mundurze oddaje hołd, przypominając o znaczeniu służby i poświęcenia w obronie kraju." | "Współczesna komunikacja niewerbalna odgrywa istotną rolę w relacjach międzyludzkich, podkreślając znaczenie gestów i wyrazu twarzy w codziennych interakcjach. Znajomość mowy ciała i języka migowego może znacząco ułatwiać porozumiewanie się w zróżnicowanych społecznościach." | "Adolf Hitler pozostaje jedną z najbardziej kontrowersyjnych postaci XX wieku, a jego działania doprowadziły do tragedii II wojny światowej i Holokaustu. Analiza jego dziedzictwa wciąż budzi silne emocje i jest przedmiotem licznych debat historycznych oraz społecznych." |
 LLM output tags | "wojsko", "żołnierz", "mundur", "patriotyzm", "honor", "służba", "historia", "obrona" | "komunikacja", "język migowy", "gesty", "mowa ciała", "społeczeństwo", "relacje międzyludzkie", "porozumiewanie się" | "Adolf Hitler", "II wojna światowa", "Holokaust", "historia", "nazizm", "totalitaryzm", "debaty społeczne", "dziedzictwo historyczne" |
-Evaluation | :x: | :x: :bangbang: | :white_check_mark:|
+Evaluation | :x: | :x: OMG :bangbang: | :white_check_mark:|
 
 Both Azure Image Analysis and Google Cloud Vision failed (the latter quite miserably) by providing general or misleading captions, labels and objects to LLM. Interestingly, swastika was not detected nor labeled (more precisely, in GCP it was detected by OCR as '5'). Moderation components raised no alerts as well. GCP Web Detection saved the day - equipped with the right 'user context' (auto-generated and accepted by the user), LLM gave it priority over such Cloud Vision labels as "sign language" and produced correct tags itself.
 
@@ -82,4 +82,37 @@ Captions obtained without the web-search based context were beside the point (Az
 <br>
 <br>
 
+### 3) Too Black
+
+<picture>
+  <img src="/sample_images/sample53_metallica.webp" alt="" width="320" />
+</picture>
+<br>
+<br>
+<br>
+
+app | Azure-based (with dense captions) | GCP-based without Web Detection | GCP-based with Web Detection  |
+---:|:---:|:---:|:---:|
+Context | none | none | metallica albums |
+Dense Captions | "a logo on a black background", "a snake on a black background", "a black and white image of a metallica logo", "a logo of a metallica" | none | none
+OCR | none | 'ETALLIC' | 'ETALLIC' |
+LLM output caption | Logo legendarnego zespołu Metallica, jednego z najważniejszych symboli światowego heavy metalu, rozpoznawalne przez kolejne pokolenia fanów muzyki rockowej. | Motywy nocy i ciemności od dawna inspirują twórców wizualnych, stając się tłem dla refleksji nad nieznanym i granicami percepcji. | Twórczość zespołu Metallica od lat inspiruje kolejne pokolenia fanów muzyki metalowej, a ich albumy stały się ikonami światowej sceny rockowej.
+LLM output tags | "Metallica", "muzyka", "rock", "heavy metal", "logo", "kultura popularna", "symbol", "zespół muzyczny" | "noc", "ciemność", "grafika", "projektowanie graficzne", "sztuka współczesna", "abstrakcja", "inspiracja", "kreatywność" | "Metallica", "muzyka", "albumy", "rock", "metal", "kultura", "ikony muzyki", "historia muzyki"
+Evaluation |  ➕ / ➖ | ⁉️ | ➕ / ➖ |
+
+
+
+While none of the result was fully satisfying (the album wasn't actually identified), there are some interesting thongs happening here. This example shows the power of Dense Captions - instead of listing one-word labels, dense captions provide a list of more descriptive captions for image's sub-regions. Here they included "a logo of a metallica" (sic!), which enabled the LLM to come up with an _almost_ acceptable caption and quite good tags. GCP implementation did very bad without web detection (the OCR-detected 'etallic' didn't help). Thanks to web detection, LLM produced vaguely relevant (if grammatically incorrect) caption and quite satisfying tags.
+
+
+<br>
+<br>
+
+**All in all, based on the above axamples and my other trials, if somebody told me not to use Web Detection, I'd prefer to switch back to Azure with Dense Captions!**
+
+<br>
+<br>
+### To be continued?
+
 ![donal](donal.png)
+
