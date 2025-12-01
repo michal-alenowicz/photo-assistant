@@ -20,10 +20,11 @@ st.set_page_config(page_title="Asystent opisywania zdjęć", layout="centered")
 col1, col2 = st.columns([6, 1])
 with col1:
     st.title("Donal POC - Asystent opisywania i tagowania zdjęć")
+    st.caption("wersja Azure Image Analysis 4.0 + Azure OpenAI API")
 
 with col2:
     st.write("")
-    banner = Image.open("donal.png")
+    banner = Image.open("donal.jpg")
     st.image(banner, width='stretch')
     st.caption('(przeciągnij mnie na pole upload)')
 
