@@ -1,7 +1,9 @@
 ## General
 A proof-of-concept app in Python (using Streamlit for UI) for generating short journalistic captions and tags for images. The current verison is based on Google Cloud Vision API + OpenAI API. Azure Image Analysis was also extensively tested; an alternative Azure implementation exists on a branch. Sorry, for now the UI and the output captions/tags are **Polish only**! English language support will be implemented soon.  
 
-Demo currently deployed to Streamlit Community Cloud: [check it out](https://photo-assistant-yjmeumynuaydjxhcu43swk.streamlit.app). This one will not store your images/data.
+**Demo currently deployed to Streamlit Community Cloud: [check it out](https://photo-assistant-yjmeumynuaydjxhcu43swk.streamlit.app).** This one will not store your images/data.
+<br>
+<br>
 
 
 ## Components/files
@@ -12,7 +14,7 @@ Demo currently deployed to Streamlit Community Cloud: [check it out](https://pho
 - **image_analyzer.py** - ImageAnalyzer class using Google Cloud Vision. Handles labels, faces, objects, landmarks & OCR, incorporates them in LLM prompt along with user context and safety context.
 - **web_entity_detector.py** - defines WebEntityDetector class, which uses Google Cloud Vision Web Detection API to obtain 'best guess label' and the most probable related entity descriptions. They are combined and provided to the user in UI as suggested context. Once approved/edited, they will become 'user context' in the LLM prompt.
 - **faq_data.json** - current set of FAQs. When this is modified, FAQSystem will generate new faq_embeddings_cache.pkl
-
+<br>
 
 ## How to run
 To run the app locally, you need to have an OpenAI API key and a Google Cloud project with Cloud Vision API enabled.  
@@ -28,7 +30,7 @@ GOOGLE_APPLICATION_CREDENTIALS=google-credentials.json
 GOOGLE_PROJECT_ID=
 OPENAI_API_KEY=
 ```
-
+<br>
 ## Also, feel free to play around online with my earlier test deployments (please note these WILL store your uploads and outputs for review/debugging for some time):  
 - [Azure-based test deployment](https://photo-assistant-mtnmekjxqywnved9t7et8p.streamlit.app) leveraging the cool Dense Captions feature of Azure Image Analysis API 4.0  
 - [GCP-based test deployment](https://photo-assistant-ggooggllee-ved9t7et8p.streamlit.app) of the current app showcasing the power (and threats) of Web-Detection-obtained context (unlike to the current demo deployment, this one DOES store uploads for future review)  
@@ -102,7 +104,7 @@ Evaluation |  ➕ / ➖ | ⁉️ | ➕ / ➖ |
 
 
 
-While none of the result was fully satisfying (the album wasn't actually identified), there are some interesting thongs happening here. This example shows the power of Dense Captions - instead of listing one-word labels, dense captions provide a list of more descriptive captions for image's sub-regions. Here they included "a logo of a metallica" (sic!), which enabled the LLM to come up with an _almost_ acceptable caption and quite good tags. GCP implementation did very bad without web detection (the OCR-detected 'etallic' didn't help). Thanks to web detection, LLM produced vaguely relevant (if grammatically incorrect) caption and quite satisfying tags.
+While none of the results are fully satisfying (the album hasn't been identified, actually), there are some interesting things happening here. This example shows the power of Dense Captions - instead of listing one-word labels, dense captions provide a list of more descriptive captions for image's sub-regions. Here they included "a logo of a metallica" (sic!), which enabled the LLM to come up with an _almost_ acceptable caption and quite good tags. GCP implementation did very bad without web detection (the OCR-detected 'etallic' didn't help). Thanks to web detection, LLM produced vaguely relevant (if grammatically incorrect) caption and quite satisfying tags.
 
 
 <br>
@@ -115,4 +117,5 @@ While none of the result was fully satisfying (the album wasn't actually identif
 ### To be continued?
 
 ![donal](donal.png)
+
 
